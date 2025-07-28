@@ -565,27 +565,27 @@ function App() {
             </button>
           </div>
           
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={shareUrls}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1 md:gap-2"
             >
-              <Share2 size={16} />
-              Share ({selectedUrls.length})
+              <Share2 size={14} className="md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Share</span> ({selectedUrls.length})
             </button>
             <button
               onClick={exportUrls}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-1 md:gap-2"
             >
-              <Download size={16} />
-              Export ({selectedUrls.length})
+              <Download size={14} className="md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Export</span> ({selectedUrls.length})
             </button>
             <button
               onClick={deleteUrls}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1 md:gap-2"
             >
-              <Trash2 size={16} />
-              Delete ({selectedUrls.length})
+              <Trash2 size={14} className="md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Delete</span> ({selectedUrls.length})
             </button>
             {selectedUrls.length > 0 && (
               <select
@@ -601,32 +601,32 @@ function App() {
             )}
           </div>
           
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => setShowImportModal(true)}
-              className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors flex items-center gap-2"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors flex items-center gap-1 md:gap-2"
             >
-              <Upload size={16} />
-              Import URLs
+              <Upload size={14} className="md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Import</span>
             </button>
             <button
               onClick={() => setShowCategoryModal(true)}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1 md:gap-2"
             >
-              <Settings size={16} />
-              Manage Categories
+              <Settings size={14} className="md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Manage</span>
             </button>
             <button
               onClick={expandAll}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              Expand All
+              <span className="hidden sm:inline">Expand </span>All
             </button>
             <button
               onClick={collapseAll}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              Collapse All
+              <span className="hidden sm:inline">Collapse </span>All
             </button>
           </div>
           
