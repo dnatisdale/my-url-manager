@@ -317,10 +317,28 @@ const CategoryManagementModal = ({ categories, onClose, onDeleteCategory, onAddC
 };
 
 function App() {
-  const [urls, setUrls] = useState([]);
+  // Load data from localStorage on app start
+  const loadData = () => {
+    try {
+      const savedUrls = localStorage.getItem('urlManagerUrls');
+      const savedCategories = localStorage.getItem('urlManagerCategories');
+      return {
+        urls: savedUrls ? JSON.parse(savedUrls) : [],
+        categories: savedCategories ? JSON.parse(savedCategories) : ['No Cat', 'Save for Later']
+      };
+    } catch (error) {
+      return {
+        urls: [],
+        categories: ['No Cat', 'Save for Later']
+      };
+    }
+  };
+
+  const initialData = loadData();
+  const [urls, setUrls] = useState(initialData.urls);
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(['No Cat', 'Save for Later']);
+  const [categories, setCategories] = useState(initialData.categories);
   const [selectedCategory, setSelectedCategory] = useState('No Cat');
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
@@ -328,6 +346,20 @@ function App() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleQRs, setVisibleQRs] = useState({});
+
+  // Save data to localStorage whenever urls or categories change
+  const saveData = (newUrls, newCategories) => {
+    try {
+      if (newUrls !== undefined) {
+        localStorage.setItem('urlManagerUrls', JSON.stringify(newUrls));
+      }
+      if (newCategories !== undefined) {
+        localStorage.setItem('urlManagerCategories', JSON.stringify(newCategories));
+      }
+    } catch (error) {
+      console.error('Failed to save data:', error);
+    }
+  };
 
   const normalizeUrl = (url) => {
     let trimmed = url.trim().replaceAll(' ', '');
@@ -348,7 +380,9 @@ function App() {
         url: normalized,
         category: selectedCategory
       };
-      setUrls([...urls, newUrl]);
+      const newUrls = [...urls, newUrl];
+      setUrls(newUrls);
+      saveData(newUrls, undefined);
     }
     setInputUrl('https://');
   };
@@ -538,8 +572,8 @@ function App() {
           </button>
         </div>
         
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex gap-2 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <input
               type="text"
               value={inputUrl}
@@ -559,7 +593,7 @@ function App() {
             </select>
             <button
               onClick={addUrl}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap"
             >
               Add URL
             </button>
@@ -620,13 +654,15 @@ function App() {
               onClick={expandAll}
               className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              <span className="hidden sm:inline">Expand </span>All
+              <span className="sm:hidden">↓ All</span>
+              <span className="hidden sm:inline">Expand All</span>
             </button>
             <button
               onClick={collapseAll}
               className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              <span className="hidden sm:inline">Collapse </span>All
+              <span className="sm:hidden">↑ All</span>
+              <span className="hidden sm:inline">Collapse All</span>
             </button>
           </div>
           
