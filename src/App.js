@@ -509,11 +509,11 @@ function App() {
   };
 
   const deleteCategory = (categoryName) => {
-    if (categoryName === 'No Cat' || categoryName === 'Save for Later') return;
+    if (categoryName === 'No Category' || categoryName === 'Save for Later') return;
     if (window.confirm(`Delete category "${categoryName}"? URLs will be moved to "No Cat".`)) {
       setUrls(urls.map(url => 
         url.category === categoryName 
-          ? { ...url, category: 'No Cat' }
+          ? { ...url, category: 'No Category' }
           : url
       ));
       setCategories(categories.filter(cat => cat !== categoryName));
