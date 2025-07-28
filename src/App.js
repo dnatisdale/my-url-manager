@@ -568,24 +568,21 @@ function App() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={shareUrls}
-              disabled={selectedUrls.length === 0}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
             >
               <Share2 size={16} />
               Share ({selectedUrls.length})
             </button>
             <button
               onClick={exportUrls}
-              disabled={selectedUrls.length === 0}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
             >
               <Download size={16} />
               Export ({selectedUrls.length})
             </button>
             <button
               onClick={deleteUrls}
-              disabled={selectedUrls.length === 0}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
             >
               <Trash2 size={16} />
               Delete ({selectedUrls.length})
