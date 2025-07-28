@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, Move, X, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X } from 'lucide-react';
 
 // QR Code component
 const QRCode = ({ value, size = 64 }) => {
   const createQRCodeSVG = (text, size) => {
     const gridSize = 21;
-    const moduleSize = size / gridSize;
     
     const pattern = [];
     for (let i = 0; i < gridSize; i++) {
