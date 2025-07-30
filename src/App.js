@@ -389,7 +389,6 @@ function App() {
       let categories = defaultCategories;
       if (savedCategories) {
         const parsed = JSON.parse(savedCategories);
-        // Merge saved categories with default ones, keeping defaults at start
         const customCategories = parsed.filter(cat => !defaultCategories.includes(cat));
         categories = [...defaultCategories, ...customCategories];
       }
@@ -442,7 +441,6 @@ function App() {
       setUrls(userData2.urls);
       setCategories(userData2.categories);
     } else {
-      // Mandatory signup - show auth modal if no user
       setShowAuthModal(true);
     }
   }, []);
@@ -482,7 +480,6 @@ function App() {
     setUser(userData);
     localStorage.setItem('urlManagerUser', JSON.stringify(userData));
     
-    // Load user's data
     const userSpecificData = loadData(email);
     setUrls(userSpecificData.urls);
     setCategories(userSpecificData.categories);
@@ -492,7 +489,6 @@ function App() {
     setUser(null);
     localStorage.removeItem('urlManagerUser');
     
-    // Reset to guest data
     const guestData = loadData('guest');
     setUrls(guestData.urls);
     setCategories(guestData.categories);
@@ -503,10 +499,8 @@ function App() {
     let trimmed = url.trim().replaceAll(' ', '');
     if (!trimmed || trimmed === 'https://') return '';
     
-    // Remove any existing protocol
     trimmed = trimmed.replace(/^https?:\/\//, '');
     
-    // Add https:// if there's actual content
     return trimmed ? `https://${trimmed}` : '';
   };
 
@@ -552,14 +546,15 @@ function App() {
     }));
   };
 
-  const expandAll = () => {
-    const allCategories = {};
-    categories.forEach(cat => allCategories[cat] = true);
-    setExpandedCategories(allCategories);
-  };
-
-  const collapseAll = () => {
-    setExpandedCategories({});
+  const toggleAllUrls = () => {
+    setAllUrlsHidden(!allUrlsHidden);
+    if (!allUrlsHidden) {
+      setExpandedCategories({});
+    } else {
+      const allExpanded = {};
+      categories.forEach(cat => allExpanded[cat] = true);
+      setExpandedCategories(allExpanded);
+    }
   };
 
   const shareUrls = () => {
@@ -663,19 +658,6 @@ function App() {
     }
   };
 
-  const toggleAllUrls = () => {
-    setAllUrlsHidden(!allUrlsHidden);
-    if (!allUrlsHidden) {
-      // Hide all categories
-      setExpandedCategories({});
-    } else {
-      // Show all categories
-      const allExpanded = {};
-      categories.forEach(cat => allExpanded[cat] = true);
-      setExpandedCategories(allExpanded);
-    }
-  };
-
   const getFilteredUrls = () => {
     return urls.filter(url => 
       url.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -709,7 +691,6 @@ function App() {
       }
       setDeferredPrompt(null);
     } else {
-      // Fallback for browsers that don't support the install prompt
       if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
         alert('To install: Tap the Share button in Safari, then "Add to Home Screen"');
       } else if (navigator.userAgent.includes('Android')) {
