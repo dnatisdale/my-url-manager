@@ -881,22 +881,6 @@ function App() {
               <Upload size={12} className="sm:w-3.5 sm:h-3.5" />
               <span className="hidden sm:inline">Import</span>
             </button>
-            <button
-              onClick={expandAll}
-              disabled={!user}
-              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
-            >
-              <span className="sm:hidden">📂</span>
-              <span className="hidden sm:inline">Expand All</span>
-            </button>
-            <button
-              onClick={collapseAll}
-              disabled={!user}
-              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
-            >
-              <span className="sm:hidden">📁</span>
-              <span className="hidden sm:inline">Collapse All</span>
-            </button>
           </div>
           
           <div className="mb-4">
@@ -989,7 +973,7 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 break-all text-sm sm:text-base"
                           >
-                            <span className="text-gray-50">https://</span>
+                            <span className="text-gray-400">https://</span>
                             <span>{url.url.replace(/^https?:\/\//, '')}</span>
                           </a>
                         </div>
