@@ -552,6 +552,16 @@ function App() {
     }));
   };
 
+  const expandAll = () => {
+    const allCategories = {};
+    categories.forEach(cat => allCategories[cat] = true);
+    setExpandedCategories(allCategories);
+  };
+
+  const collapseAll = () => {
+    setExpandedCategories({});
+  };
+
   const shareUrls = () => {
     if (selectedUrls.length === 0) return;
     const selectedUrlObjects = urls.filter(u => selectedUrls.includes(u.id));
@@ -784,15 +794,23 @@ function App() {
           
           <div className="flex flex-col gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={inputUrl}
-                onChange={e => setInputUrl(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Enter URL..."
-                className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={!user}
-              />
+              <div className="flex-1 relative">
+                <span 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm sm:text-base"
+                  style={{ color: '#e0e4e7' }}
+                >
+                  https://
+                </span>
+                <input
+                  type="text"
+                  value={inputUrl.replace('https://', '')}
+                  onChange={e => setInputUrl('https://' + e.target.value.replace(/^https?:\/\//, ''))}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Enter URL (without https://)"
+                  className="w-full pl-20 pr-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={!user}
+                />
+              </div>
               <div className="flex gap-2">
                 <select
                   value={selectedCategory}
