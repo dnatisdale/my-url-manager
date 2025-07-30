@@ -1,5 +1,71 @@
-import React, { useState } from 'react';
-import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User } from 'lucide-react';
+
+// Simple Auth Modal Component
+const AuthModal = ({ onClose, onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (email.trim()) {
+      onLogin(email.trim());
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              Email (used as your account ID)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-500 hover:text-blue-600 text-sm"
+          >
+            {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
+          </button>
+        </div>
+
+        <div className="mt-4 text-xs text-gray-500">
+          <p>📱 Your data will sync across all your devices</p>
+          <p>🔒 Simple email-based account (no password needed for demo)</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // QR Code component
 const QRCode = ({ value, size = 64 }) => {
@@ -317,11 +383,15 @@ const CategoryManagementModal = ({ categories, onClose, onDeleteCategory, onAddC
 };
 
 function App() {
-  // Load data from localStorage on app start
-  const loadData = () => {
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Load data from localStorage on app start (user-specific)
+  const loadData = (userEmail = null) => {
     try {
-      const savedUrls = localStorage.getItem('urlManagerUrls');
-      const savedCategories = localStorage.getItem('urlManagerCategories');
+      const userKey = userEmail || user?.email || 'guest';
+      const savedUrls = localStorage.getItem(`urlManagerUrls_${userKey}`);
+      const savedCategories = localStorage.getItem(`urlManagerCategories_${userKey}`);
       return {
         urls: savedUrls ? JSON.parse(savedUrls) : [],
         categories: savedCategories ? JSON.parse(savedCategories) : ['No Cat', 'Save for Later']
@@ -333,6 +403,18 @@ function App() {
       };
     }
   };
+
+  // Load user from localStorage on app start
+  useEffect(() => {
+    const savedUser = localStorage.getItem('urlManagerUser');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      const userData2 = loadData(userData.email);
+      setUrls(userData2.urls);
+      setCategories(userData2.categories);
+    }
+  }, []);
 
   const initialData = loadData();
   const [urls, setUrls] = useState(initialData.urls);
@@ -347,18 +429,42 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleQRs, setVisibleQRs] = useState({});
 
-  // Save data to localStorage whenever urls or categories change
+  // Save data to localStorage with user-specific keys
   const saveData = (newUrls, newCategories) => {
     try {
+      const userKey = user?.email || 'guest';
       if (newUrls !== undefined) {
-        localStorage.setItem('urlManagerUrls', JSON.stringify(newUrls));
+        localStorage.setItem(`urlManagerUrls_${userKey}`, JSON.stringify(newUrls));
       }
       if (newCategories !== undefined) {
-        localStorage.setItem('urlManagerCategories', JSON.stringify(newCategories));
+        localStorage.setItem(`urlManagerCategories_${userKey}`, JSON.stringify(newCategories));
       }
     } catch (error) {
       console.error('Failed to save data:', error);
     }
+  };
+
+  // Authentication functions
+  const handleLogin = (email) => {
+    const userData = { email, signedInAt: new Date().toISOString() };
+    setUser(userData);
+    localStorage.setItem('urlManagerUser', JSON.stringify(userData));
+    
+    // Load user's data
+    const userSpecificData = loadData(email);
+    setUrls(userSpecificData.urls);
+    setCategories(userSpecificData.categories);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('urlManagerUser');
+    
+    // Reset to guest data
+    const guestData = loadData('guest');
+    setUrls(guestData.urls);
+    setCategories(guestData.categories);
+    setSelectedUrls([]);
   };
 
   const normalizeUrl = (url) => {
@@ -509,11 +615,11 @@ function App() {
   };
 
   const deleteCategory = (categoryName) => {
-    if (categoryName === 'No Category' || categoryName === 'Save for Later') return;
+    if (categoryName === 'No Cat' || categoryName === 'Save for Later') return;
     if (window.confirm(`Delete category "${categoryName}"? URLs will be moved to "No Cat".`)) {
       setUrls(urls.map(url => 
         url.category === categoryName 
-          ? { ...url, category: 'No Category' }
+          ? { ...url, category: 'No Cat' }
           : url
       ));
       setCategories(categories.filter(cat => cat !== categoryName));
@@ -560,19 +666,56 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif' }}>
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-center text-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800">
             ข่าวดี Thai: Good News
           </h1>
-          <button
-            onClick={installApp}
-            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-          >
-            Install App
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-100 rounded-lg">
+                  <User size={16} className="text-green-600" />
+                  <span className="text-sm font-medium text-green-700">
+                    {user.email.split('@')[0]}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
+                >
+                  <LogOut size={16} />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <LogIn size={16} />
+                Sign In for Sync
+              </button>
+            )}
+            
+            <button
+              onClick={installApp}
+              className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+            >
+              <span className="hidden sm:inline">Install </span>App
+            </button>
+          </div>
         </div>
         
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+          {user && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                ☁️ <strong>Synced to Cloud:</strong> Your data automatically saves and syncs across all your devices
+              </p>
+            </div>
+          )}
+          
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <input
               type="text"
@@ -580,12 +723,12 @@ function App() {
               onChange={e => setInputUrl(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Enter URL..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <select
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {categories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -593,7 +736,7 @@ function App() {
             </select>
             <button
               onClick={addUrl}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap"
+              className="px-4 py-2 md:px-6 md:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap"
             >
               Add URL
             </button>
@@ -654,14 +797,14 @@ function App() {
               onClick={expandAll}
               className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              <span className="sm:hidden">↓ All</span>
+              <span className="sm:hidden">📂</span>
               <span className="hidden sm:inline">Expand All</span>
             </button>
             <button
               onClick={collapseAll}
               className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
-              <span className="sm:hidden">↑ All</span>
+              <span className="sm:hidden">📁</span>
               <span className="hidden sm:inline">Collapse All</span>
             </button>
           </div>
@@ -768,6 +911,13 @@ function App() {
             );
           })}
         </div>
+        
+        {showAuthModal && (
+          <AuthModal
+            onClose={() => setShowAuthModal(false)}
+            onLogin={handleLogin}
+          />
+        )}
         
         {showQRModal && (
           <QRModal
