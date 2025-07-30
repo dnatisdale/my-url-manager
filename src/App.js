@@ -989,7 +989,7 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 break-all text-sm sm:text-base"
                           >
-                            <span className="text-gray-200">https://</span>
+                            <span className="text-gray-100">https://</span>
                             <span>{url.url.replace(/^https?:\/\//, '')}</span>
                           </a>
                         </div>
