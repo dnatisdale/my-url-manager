@@ -595,6 +595,16 @@ function App() {
     return trimmed ? `https://${trimmed}` : '';
   };
 
+  // Helper function to sort categories alphabetically (keeping permanent ones first)
+  const getSortedCategories = () => {
+    const permanentCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+    const customCategories = categories
+      .filter(cat => !permanentCategories.includes(cat))
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    
+    return [...permanentCategories.filter(cat => categories.includes(cat)), ...customCategories];
+  };
+
   // Sound effect for URL addition
   const playChimeSound = () => {
     try {
@@ -927,6 +937,11 @@ function App() {
                 placeholder="Enter URL and press Enter..."
                 className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={!user}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                inputMode="url"
               />
               <button
                 onClick={() => setShowCategoryModal(true)}
@@ -972,7 +987,7 @@ function App() {
                 defaultValue=""
               >
                 <option value="">Move to...</option>
-                {categories.map(cat => (
+                {getSortedCategories().map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -1032,7 +1047,7 @@ function App() {
         )}
         
         <div className="space-y-3 sm:space-y-4">
-          {categories.map(category => {
+          {getSortedCategories().map(category => {
             const categoryUrls = urlsByCategory[category] || [];
             const isExpanded = expandedCategories[category] && !allUrlsHidden;
             
@@ -1120,7 +1135,7 @@ function App() {
           <CategorySelectionModal
             onClose={() => setShowCategorySelectionModal(false)}
             onConfirm={addUrl}
-            categories={categories}
+            categories={getSortedCategories()}
             url={pendingUrl}
           />
         )}
@@ -1144,7 +1159,7 @@ function App() {
           <ImportModal
             onClose={() => setShowImportModal(false)}
             onImport={handleImport}
-            categories={categories}
+            categories={getSortedCategories()}
           />
         )}
         
