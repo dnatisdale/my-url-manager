@@ -134,14 +134,15 @@ const QRModal = ({ url, onClose }) => {
 const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
   const [selectedCategory, setSelectedCategory] = useState('No Cat');
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [createNewCategory, setCreateNewCategory] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
   const handleConfirm = () => {
-    const categoryToUse = createNewCategory ? newCategoryName.trim() : selectedCategory;
-    if (categoryToUse) {
-      onConfirm(categoryToUse, createNewCategory);
-      onClose();
+    if (showNewCategoryInput && newCategoryName.trim()) {
+      onConfirm(newCategoryName.trim(), true);
+    } else if (!showNewCategoryInput && selectedCategory) {
+      onConfirm(selectedCategory, false);
     }
+    onClose();
   };
 
   return (
@@ -163,40 +164,42 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Choose Category</label>
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => setCreateNewCategory(false)}
-              className={`px-3 py-1 rounded text-sm ${!createNewCategory ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              Existing
-            </button>
-            <button
-              onClick={() => setCreateNewCategory(true)}
-              className={`px-3 py-1 rounded text-sm ${createNewCategory ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              Create New
-            </button>
-          </div>
           
-          {createNewCategory ? (
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="New category name"
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-            />
+          {!showNewCategoryInput ? (
+            <>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setShowNewCategoryInput(true)}
+                className="text-blue-500 hover:text-blue-600 text-sm"
+              >
+                + Create new category
+              </button>
+            </>
           ) : (
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="New category name"
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                autoFocus
+              />
+              <button
+                onClick={() => setShowNewCategoryInput(false)}
+                className="text-gray-500 hover:text-gray-600 text-sm"
+              >
+                ← Back to existing categories
+              </button>
+            </>
           )}
         </div>
 
@@ -209,7 +212,7 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
           </button>
           <button
             onClick={handleConfirm}
-            disabled={createNewCategory && !newCategoryName.trim()}
+            disabled={showNewCategoryInput && !newCategoryName.trim()}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
           >
             Add URL
@@ -593,11 +596,11 @@ function App() {
     return trimmed ? `https://${trimmed}` : '';
   };
 
-  const addUrl = (category, createNew = false) => {
+  const addUrl = (category, isNewCategory = false) => {
     const normalized = normalizeUrl(pendingUrl);
     if (normalized && !urls.find(u => u.url === normalized)) {
       // Add new category if needed
-      if (createNew && !categories.includes(category)) {
+      if (isNewCategory && !categories.includes(category)) {
         const newCategories = [...categories, category];
         setCategories(newCategories);
         saveData(undefined, newCategories);
@@ -1049,7 +1052,7 @@ function App() {
                             href={url.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 break-all text-sm sm:text-base"
+                            className="text-black hover:text-gray-800 break-all text-sm sm:text-base"
                           >
                             <span className="text-gray-400">https://</span>
                             <span>{url.url.replace(/^https?:\/\//, '')}</span>
