@@ -132,7 +132,7 @@ const QRModal = ({ url, onClose }) => {
 
 // Category Selection Modal Component
 const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
-  const [selectedCategory, setSelectedCategory] = useState('No Cat');
+  const [selectedCategory, setSelectedCategory] = useState('No Category');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
@@ -475,7 +475,7 @@ function App() {
       const userKey = userEmail || user?.email || 'guest';
       const savedUrls = localStorage.getItem(`urlManagerUrls_${userKey}`);
       const savedCategories = localStorage.getItem(`urlManagerCategories_${userKey}`);
-      const defaultCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+      const defaultCategories = ['No Category', 'Save for Later', '5fish', 'GRN', 'Thailand'];
       
       let categories = defaultCategories;
       if (savedCategories) {
@@ -491,7 +491,7 @@ function App() {
     } catch (error) {
       return {
         urls: [],
-        categories: ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']
+        categories: ['No Category', 'Save for Later', '5fish', 'GRN', 'Thailand']
       };
     }
   };
@@ -540,7 +540,7 @@ function App() {
   const [urls, setUrls] = useState(initialData.urls);
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']);
+  const [categories, setCategories] = useState(['No Category', 'Save for Later', '5fish', 'GRN', 'Thailand']);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -597,7 +597,7 @@ function App() {
 
   // Helper function to sort categories alphabetically (keeping permanent ones first)
   const getSortedCategories = () => {
-    const permanentCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+    const permanentCategories = ['No Category', 'Save for Later', '5fish', 'GRN', 'Thailand'];
     const customCategories = categories
       .filter(cat => !permanentCategories.includes(cat))
       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
