@@ -353,6 +353,30 @@ const CategoryManagementModal = ({ categories, onClose, onDeleteCategory, onAddC
 function App() {
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  // PWA Install Event Listener
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    const handleAppInstalled = () => {
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
 
   // Load data from localStorage on app start (user-specific)
   const loadData = (userEmail = null) => {
@@ -482,8 +506,8 @@ function App() {
     // Remove any existing protocol
     trimmed = trimmed.replace(/^https?:\/\//, '');
     
-    // Add https://
-    return `https://${trimmed}`;
+    // Add https:// if there's actual content
+    return trimmed ? `https://${trimmed}` : '';
   };
 
   const addUrl = () => {
@@ -676,8 +700,24 @@ function App() {
     }
   };
 
-  const installApp = () => {
-    alert('To install: Use your browser\'s "Add to Home Screen" or "Install App" option in the menu.');
+  const installApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setShowInstallButton(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Fallback for browsers that don't support the install prompt
+      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+        alert('To install: Tap the Share button in Safari, then "Add to Home Screen"');
+      } else if (navigator.userAgent.includes('Android')) {
+        alert('To install: Tap the menu (⋮) in Chrome, then "Add to Home screen" or "Install app"');
+      } else {
+        alert('To install: Look for "Install app" or "Add to Home Screen" in your browser menu');
+      }
+    }
   };
 
   const toggleQR = (urlId) => {
@@ -724,12 +764,14 @@ function App() {
               </button>
             )}
             
-            <button
-              onClick={installApp}
-              className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-            >
-              <span className="hidden sm:inline">Install </span>App
-            </button>
+            {showInstallButton && (
+              <button
+                onClick={installApp}
+                className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+              >
+                <span className="hidden sm:inline">Install </span>App
+              </button>
+            )}
           </div>
         </div>
         
@@ -751,15 +793,20 @@ function App() {
           )}
           
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
-            <input
-              type="text"
-              value={inputUrl}
-              onChange={e => setInputUrl(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter URL..."
-              className="flex-1 px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!user}
-            />
+            <div className="flex-1 relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                https://
+              </span>
+              <input
+                type="text"
+                value={inputUrl.replace('https://', '')}
+                onChange={e => setInputUrl('https://' + e.target.value.replace(/^https?:\/\//, ''))}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter URL (without https://)"
+                className="w-full pl-16 pr-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!user}
+              />
+            </div>
             <div className="flex gap-2">
               <select
                 value={selectedCategory}
@@ -838,13 +885,6 @@ function App() {
               <span className="hidden sm:inline">Import</span>
             </button>
             <button
-              onClick={toggleAllUrls}
-              disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 transition-colors"
-            >
-              {allUrlsHidden ? '👁️ Show All' : '🙈 Hide All'}
-            </button>
-            <button
               onClick={expandAll}
               disabled={!user}
               className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors"
@@ -881,6 +921,17 @@ function App() {
             </p>
           )}
         </div>
+        
+        {urls.length > 0 && user && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={toggleAllUrls}
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
+            >
+              {allUrlsHidden ? '👁️ Show All URLs' : '🙈 Hide All URLs'}
+            </button>
+          </div>
+        )}
         
         <div className="space-y-4">
           {categories.map(category => {
