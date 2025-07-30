@@ -596,6 +596,43 @@ function App() {
     return trimmed ? `https://${trimmed}` : '';
   };
 
+  // Sound effect for URL addition
+  const playChimeSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create a pleasant chime sound with multiple tones
+      const playTone = (frequency, startTime, duration) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        // Envelope for smooth sound
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+      
+      // Play a pleasant C major chord progression
+      const now = audioContext.currentTime;
+      playTone(523.25, now, 0.3);      // C5
+      playTone(659.25, now + 0.1, 0.3); // E5
+      playTone(783.99, now + 0.2, 0.4); // G5
+      
+    } catch (error) {
+      // Fallback for browsers that don't support Web Audio API
+      console.log('Audio not supported');
+    }
+  };
+
   const addUrl = (category, isNewCategory = false) => {
     const normalized = normalizeUrl(pendingUrl);
     if (normalized && !urls.find(u => u.url === normalized)) {
@@ -614,6 +651,9 @@ function App() {
       const newUrls = [...urls, newUrl];
       setUrls(newUrls);
       saveData(newUrls, undefined);
+      
+      // Play success sound
+      playChimeSound();
     }
     setInputUrl('https://');
     setPendingUrl('');
