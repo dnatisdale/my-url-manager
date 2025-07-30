@@ -960,7 +960,15 @@ function App() {
                         <span className="sm:hidden">All</span>
                       </button>
                     )}
-                    {isExpanded ? <ChevronUp size={18} className="sm:w-5 sm:h-5" /> : <ChevronDown size={18} className="sm:w-5 sm:h-5" />}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCategory(category);
+                      }}
+                      className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      {isExpanded ? <ChevronUp size={16} className="sm:w-4 sm:h-4" /> : <ChevronDown size={16} className="sm:w-4 sm:h-4" />}
+                    </button>
                   </div>
                 </div>
                 
