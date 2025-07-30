@@ -696,11 +696,27 @@ function App() {
     }
   };
 
-  const toggleCategory = (category) => {
+  const toggleCategory = (category, event) => {
+    const wasExpanded = expandedCategories[category];
+    
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }));
+    
+    // If we're expanding the category, scroll to it smoothly
+    if (!wasExpanded && !allUrlsHidden) {
+      setTimeout(() => {
+        const categoryElement = event.target.closest('.category-container');
+        if (categoryElement) {
+          categoryElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }
+      }, 100); // Small delay to let the expansion animation start
+    }
   };
 
   const toggleAllUrls = () => {
@@ -1054,10 +1070,10 @@ function App() {
             if (categoryUrls.length === 0 && searchTerm) return null;
             
             return (
-              <div key={category} className="bg-white rounded-lg shadow-md">
+              <div key={category} className="bg-white rounded-lg shadow-md category-container">
                 <div
                   className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
-                  onClick={() => toggleCategory(category)}
+                  onClick={(e) => toggleCategory(category, e)}
                 >
                   <div className="flex items-center gap-2 sm:gap-3">
                     <span className="font-medium text-sm sm:text-base">{category}</span>
@@ -1079,7 +1095,7 @@ function App() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleCategory(category);
+                        toggleCategory(category, e);
                       }}
                       className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
