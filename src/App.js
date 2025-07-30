@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User } from 'lucide-react';
 
-// Simple Auth Modal Component
-const AuthModal = ({ onClose, onLogin }) => {
+// Simple Auth Modal Component (Mandatory)
+const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
   const [email, setEmail] = useState('');
   const [isLogin, setIsLogin] = useState(true);
 
@@ -19,12 +19,22 @@ const AuthModal = ({ onClose, onLogin }) => {
       <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {mandatory ? '🔒 Sign In Required' : (isLogin ? 'Sign In' : 'Create Account')}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
-          </button>
+          {!mandatory && (
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X size={24} />
+            </button>
+          )}
         </div>
+
+        {mandatory && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              Sign in is required to use this app and sync your URLs across devices.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -49,14 +59,16 @@ const AuthModal = ({ onClose, onLogin }) => {
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-500 hover:text-blue-600 text-sm"
-          >
-            {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
-          </button>
-        </div>
+        {!mandatory && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-blue-500 hover:text-blue-600 text-sm"
+            >
+              {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
+            </button>
+          </div>
+        )}
 
         <div className="mt-4 text-xs text-gray-500">
           <p>📱 Your data will sync across all your devices</p>
@@ -267,7 +279,7 @@ const CategoryManagementModal = ({ categories, onClose, onDeleteCategory, onAddC
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredCategories = categories
-    .filter(cat => cat !== 'Save for Later' && cat !== 'No Cat')
+    .filter(cat => !['Save for Later', 'No Cat', '5fish', 'GRN', 'Thailand'].includes(cat))
     .filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort();
 
@@ -348,33 +360,52 @@ function App() {
       const userKey = userEmail || user?.email || 'guest';
       const savedUrls = localStorage.getItem(`urlManagerUrls_${userKey}`);
       const savedCategories = localStorage.getItem(`urlManagerCategories_${userKey}`);
+      const defaultCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+      
+      let categories = defaultCategories;
+      if (savedCategories) {
+        const parsed = JSON.parse(savedCategories);
+        // Merge saved categories with default ones, keeping defaults at start
+        const customCategories = parsed.filter(cat => !defaultCategories.includes(cat));
+        categories = [...defaultCategories, ...customCategories];
+      }
+      
       return {
         urls: savedUrls ? JSON.parse(savedUrls) : [],
-        categories: savedCategories ? JSON.parse(savedCategories) : ['No Cat', 'Save for Later']
+        categories: categories
       };
     } catch (error) {
       return {
         urls: [],
-        categories: ['No Cat', 'Save for Later']
+        categories: ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']
       };
     }
   };
 
-  // Load user from localStorage on app start
+  // Load user from localStorage on app start and enforce mandatory signup
   useEffect(() => {
     const loadUserData = (userEmail = null) => {
       try {
         const userKey = userEmail || 'guest';
         const savedUrls = localStorage.getItem(`urlManagerUrls_${userKey}`);
         const savedCategories = localStorage.getItem(`urlManagerCategories_${userKey}`);
+        const defaultCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+        
+        let categories = defaultCategories;
+        if (savedCategories) {
+          const parsed = JSON.parse(savedCategories);
+          const customCategories = parsed.filter(cat => !defaultCategories.includes(cat));
+          categories = [...defaultCategories, ...customCategories];
+        }
+        
         return {
           urls: savedUrls ? JSON.parse(savedUrls) : [],
-          categories: savedCategories ? JSON.parse(savedCategories) : ['No Cat', 'Save for Later']
+          categories: categories
         };
       } catch (error) {
         return {
           urls: [],
-          categories: ['No Cat', 'Save for Later']
+          categories: ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']
         };
       }
     };
@@ -386,6 +417,9 @@ function App() {
       const userData2 = loadUserData(userData.email);
       setUrls(userData2.urls);
       setCategories(userData2.categories);
+    } else {
+      // Mandatory signup - show auth modal if no user
+      setShowAuthModal(true);
     }
   }, []);
 
@@ -393,7 +427,7 @@ function App() {
   const [urls, setUrls] = useState(initialData.urls);
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(initialData.categories);
+  const [categories, setCategories] = useState(['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']);
   const [selectedCategory, setSelectedCategory] = useState('No Cat');
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
@@ -401,6 +435,7 @@ function App() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleQRs, setVisibleQRs] = useState({});
+  const [allUrlsHidden, setAllUrlsHidden] = useState(false);
 
   // Save data to localStorage with user-specific keys
   const saveData = (newUrls, newCategories) => {
@@ -588,7 +623,12 @@ function App() {
   };
 
   const deleteCategory = (categoryName) => {
-    if (categoryName === 'No Cat' || categoryName === 'Save for Later') return;
+    const permanentCategories = ['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand'];
+    if (permanentCategories.includes(categoryName)) {
+      alert(`Cannot delete "${categoryName}" - this is a permanent category.`);
+      return;
+    }
+    
     if (window.confirm(`Delete category "${categoryName}"? URLs will be moved to "No Cat".`)) {
       setUrls(urls.map(url => 
         url.category === categoryName 
@@ -596,6 +636,19 @@ function App() {
           : url
       ));
       setCategories(categories.filter(cat => cat !== categoryName));
+    }
+  };
+
+  const toggleAllUrls = () => {
+    setAllUrlsHidden(!allUrlsHidden);
+    if (!allUrlsHidden) {
+      // Hide all categories
+      setExpandedCategories({});
+    } else {
+      // Show all categories
+      const allExpanded = {};
+      categories.forEach(cat => allExpanded[cat] = true);
+      setExpandedCategories(allExpanded);
     }
   };
 
@@ -681,6 +734,14 @@ function App() {
         </div>
         
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+          {!user && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 font-medium">
+                🔒 Please sign in to save your URLs and sync across devices
+              </p>
+            </div>
+          )}
+          
           {user && (
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700">
@@ -697,19 +758,32 @@ function App() {
               onKeyPress={handleKeyPress}
               placeholder="Enter URL..."
               className="flex-1 px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!user}
             />
-            <select
-              value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={selectedCategory}
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!user}
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setShowCategoryModal(true)}
+                disabled={!user}
+                className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
+                title="Manage Categories"
+              >
+                <Settings size={14} />
+              </button>
+            </div>
             <button
               onClick={addUrl}
-              className="px-4 py-2 md:px-6 md:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap"
+              disabled={!user}
+              className="px-4 py-2 md:px-6 md:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors whitespace-nowrap"
             >
               Add URL
             </button>
@@ -718,26 +792,29 @@ function App() {
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={shareUrls}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1 md:gap-2"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
             >
               <Share2 size={14} className="md:w-4 md:h-4" />
               <span className="hidden sm:inline">Share</span> ({selectedUrls.length})
             </button>
             <button
               onClick={exportUrls}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-1 md:gap-2"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
             >
               <Download size={14} className="md:w-4 md:h-4" />
               <span className="hidden sm:inline">Export</span> ({selectedUrls.length})
             </button>
             <button
               onClick={deleteUrls}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1 md:gap-2"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
             >
               <Trash2 size={14} className="md:w-4 md:h-4" />
               <span className="hidden sm:inline">Delete</span> ({selectedUrls.length})
             </button>
-            {selectedUrls.length > 0 && (
+            {selectedUrls.length > 0 && user && (
               <select
                 onChange={e => e.target.value && moveUrls(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg"
@@ -754,28 +831,31 @@ function App() {
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => setShowImportModal(true)}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors flex items-center gap-1 md:gap-2"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
             >
               <Upload size={14} className="md:w-4 md:h-4" />
               <span className="hidden sm:inline">Import</span>
             </button>
             <button
-              onClick={() => setShowCategoryModal(true)}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1 md:gap-2"
+              onClick={toggleAllUrls}
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 transition-colors"
             >
-              <Settings size={14} className="md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Manage</span>
+              {allUrlsHidden ? '👁️ Show All' : '🙈 Hide All'}
             </button>
             <button
               onClick={expandAll}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors"
             >
               <span className="sm:hidden">📂</span>
               <span className="hidden sm:inline">Expand All</span>
             </button>
             <button
               onClick={collapseAll}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              disabled={!user}
+              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors"
             >
               <span className="sm:hidden">📁</span>
               <span className="hidden sm:inline">Collapse All</span>
@@ -805,7 +885,7 @@ function App() {
         <div className="space-y-4">
           {categories.map(category => {
             const categoryUrls = urlsByCategory[category] || [];
-            const isExpanded = expandedCategories[category];
+            const isExpanded = expandedCategories[category] && !allUrlsHidden;
             
             if (categoryUrls.length === 0 && searchTerm) return null;
             
@@ -820,7 +900,7 @@ function App() {
                     <span className="text-sm text-gray-500">({categoryUrls.length})</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {categoryUrls.length > 0 && (
+                    {categoryUrls.length > 0 && user && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -852,7 +932,8 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 break-all"
                           >
-                            {url.url}
+                            <span className="text-gray-400">https://</span>
+                            <span>{url.url.replace(/^https?:\/\//, '')}</span>
                           </a>
                         </div>
                         <div className="flex items-center gap-2">
@@ -889,6 +970,7 @@ function App() {
           <AuthModal
             onClose={() => setShowAuthModal(false)}
             onLogin={handleLogin}
+            mandatory={!user}
           />
         )}
         
