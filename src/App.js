@@ -548,7 +548,6 @@ function App() {
   const [showCategorySelectionModal, setShowCategorySelectionModal] = useState(false);
   const [pendingUrl, setPendingUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibleQRs, setVisibleQRs] = useState({});
   const [allUrlsHidden, setAllUrlsHidden] = useState(false);
 
   // Save data to localStorage with user-specific keys
@@ -849,11 +848,8 @@ function App() {
     }
   };
 
-  const toggleQR = (urlId) => {
-    setVisibleQRs(prev => ({
-      ...prev,
-      [urlId]: !prev[urlId]
-    }));
+  const openQRModal = (url) => {
+    setShowQRModal(url);
   };
 
   const urlsByCategory = getUrlsByCategory();
@@ -1100,19 +1096,11 @@ function App() {
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           <button
-                            onClick={() => toggleQR(url.id)}
+                            onClick={() => openQRModal(url.url)}
                             className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
                           >
                             <QrCode size={14} className="sm:w-4 sm:h-4" />
                           </button>
-                          {visibleQRs[url.id] && (
-                            <div
-                              className="cursor-pointer"
-                              onClick={() => setShowQRModal(url.url)}
-                            >
-                              <QRCode value={url.url} size={40} className="sm:w-12 sm:h-12" />
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
