@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User } from 'lucide-react';
+import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff } from 'lucide-react';
 
 // Simple Auth Modal Component (Mandatory)
 const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
@@ -909,7 +909,17 @@ function App() {
               onClick={toggleAllUrls}
               className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2 text-sm sm:text-base"
             >
-              {allUrlsHidden ? '👁️ Show All URLs' : '🙈 Hide All URLs'}
+              {allUrlsHidden ? (
+                <>
+                  <Eye size={16} />
+                  <span>Show All URLs</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff size={16} />
+                  <span>Hide All URLs</span>
+                </>
+              )}
             </button>
           </div>
         )}
