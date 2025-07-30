@@ -730,55 +730,55 @@ function App() {
   const urlsByCategory = getUrlsByCategory();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontFamily: 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6" style={{ fontFamily: 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif' }}>
       <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 md:mb-8 gap-2 sm:gap-4">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
             ข่าวดี Thai: Good News
           </h1>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {user ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-2 bg-green-100 rounded-lg">
-                  <User size={16} className="text-green-600" />
-                  <span className="text-sm font-medium text-green-700">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-green-100 rounded-lg">
+                  <User size={14} className="sm:w-4 sm:h-4 text-green-600" />
+                  <span className="text-xs sm:text-sm font-medium text-green-700 max-w-20 sm:max-w-none truncate">
                     {user.email.split('@')[0]}
                   </span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
+                  className="px-2 sm:px-3 py-1 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
                 >
-                  <LogOut size={16} />
-                  <span className="hidden sm:inline">Sign Out</span>
+                  <LogOut size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline text-sm">Sign Out</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 sm:gap-2"
               >
-                <LogIn size={16} />
-                Sign In for Sync
+                <LogIn size={14} className="sm:w-4 sm:h-4" />
+                <span className="text-sm">Sign In for Sync</span>
               </button>
             )}
             
             {showInstallButton && (
               <button
                 onClick={installApp}
-                className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+                className="px-2 sm:px-3 py-1 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
               >
-                <span className="hidden sm:inline">Install </span>App
+                <span className="text-xs sm:text-sm">App</span>
               </button>
             )}
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
           {!user && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 font-medium">
+            <div className="mb-4 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 font-medium text-sm sm:text-base">
                 🔒 Please sign in to save your URLs and sync across devices
               </p>
             </div>
@@ -786,80 +786,82 @@ function App() {
           
           {user && (
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
+              <p className="text-xs sm:text-sm text-blue-700">
                 ☁️ <strong>Synced to Cloud:</strong> Your data automatically saves and syncs across all your devices
               </p>
             </div>
           )}
           
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
-            <input
-              type="text"
-              value={inputUrl}
-              onChange={e => setInputUrl(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter URL..."
-              className="flex-1 px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!user}
-            />
-            <div className="flex gap-2">
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <div className="flex flex-col gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={inputUrl}
+                onChange={e => setInputUrl(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter URL..."
+                className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={!user}
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowCategoryModal(true)}
-                disabled={!user}
-                className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
-                title="Manage Categories"
-              >
-                <Settings size={14} />
-              </button>
+              />
+              <div className="flex gap-2">
+                <select
+                  value={selectedCategory}
+                  onChange={e => setSelectedCategory(e.target.value)}
+                  className="flex-1 sm:flex-none px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={!user}
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  disabled={!user}
+                  className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
+                  title="Manage Categories"
+                >
+                  <Settings size={14} />
+                </button>
+              </div>
             </div>
             <button
               onClick={addUrl}
               disabled={!user}
-              className="px-4 py-2 md:px-6 md:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors whitespace-nowrap"
+              className="w-full sm:w-auto sm:self-start px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm sm:text-base"
             >
               Add URL
             </button>
           </div>
           
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
             <button
               onClick={shareUrls}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
-              <Share2 size={14} className="md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Share</span> ({selectedUrls.length})
+              <Share2 size={12} className="sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline sm:hidden lg:inline">Share</span> ({selectedUrls.length})
             </button>
             <button
               onClick={exportUrls}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
-              <Download size={14} className="md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Export</span> ({selectedUrls.length})
+              <Download size={12} className="sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline sm:hidden lg:inline">Export</span> ({selectedUrls.length})
             </button>
             <button
               onClick={deleteUrls}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
-              <Trash2 size={14} className="md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Delete</span> ({selectedUrls.length})
+              <Trash2 size={12} className="sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline sm:hidden lg:inline">Delete</span> ({selectedUrls.length})
             </button>
             {selectedUrls.length > 0 && user && (
               <select
                 onChange={e => e.target.value && moveUrls(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                className="col-span-2 sm:col-span-1 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg"
                 defaultValue=""
               >
                 <option value="">Move to...</option>
@@ -870,19 +872,19 @@ function App() {
             )}
           </div>
           
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
             <button
               onClick={() => setShowImportModal(true)}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 transition-colors flex items-center gap-1 md:gap-2"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
-              <Upload size={14} className="md:w-4 md:h-4" />
+              <Upload size={12} className="sm:w-3.5 sm:h-3.5" />
               <span className="hidden sm:inline">Import</span>
             </button>
             <button
               onClick={expandAll}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
               <span className="sm:hidden">📂</span>
               <span className="hidden sm:inline">Expand All</span>
@@ -890,7 +892,7 @@ function App() {
             <button
               onClick={collapseAll}
               disabled={!user}
-              className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors"
+              className="px-2 sm:px-3 py-2 text-xs sm:text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-1"
             >
               <span className="sm:hidden">📁</span>
               <span className="hidden sm:inline">Collapse All</span>
@@ -899,36 +901,36 @@ function App() {
           
           <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder="Search URLs and categories..."
-                className="w-full pl-10 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
           
           {urls.length === 0 && (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base">
               No URLs added yet. Add some URLs to get started!
             </p>
           )}
         </div>
         
         {urls.length > 0 && user && (
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-3 sm:mb-4">
             <button
               onClick={toggleAllUrls}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2 text-sm sm:text-base"
             >
               {allUrlsHidden ? '👁️ Show All URLs' : '🙈 Hide All URLs'}
             </button>
           </div>
         )}
         
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {categories.map(category => {
             const categoryUrls = urlsByCategory[category] || [];
             const isExpanded = expandedCategories[category] && !allUrlsHidden;
@@ -938,70 +940,71 @@ function App() {
             return (
               <div key={category} className="bg-white rounded-lg shadow-md">
                 <div
-                  className="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
+                  className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
                   onClick={() => toggleCategory(category)}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium">{category}</span>
-                    <span className="text-sm text-gray-500">({categoryUrls.length})</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="font-medium text-sm sm:text-base">{category}</span>
+                    <span className="text-xs sm:text-sm text-gray-500">({categoryUrls.length})</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {categoryUrls.length > 0 && user && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           selectAllInCategory(category);
                         }}
-                        className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                       >
-                        Select All
+                        <span className="hidden sm:inline">Select All</span>
+                        <span className="sm:hidden">All</span>
                       </button>
                     )}
-                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    {isExpanded ? <ChevronUp size={18} className="sm:w-5 sm:h-5" /> : <ChevronDown size={18} className="sm:w-5 sm:h-5" />}
                   </div>
                 </div>
                 
                 {isExpanded && (
                   <div className="border-t">
                     {categoryUrls.map(url => (
-                      <div key={url.id} className="p-4 border-b last:border-b-0 flex items-center gap-4">
+                      <div key={url.id} className="p-3 sm:p-4 border-b last:border-b-0 flex items-center gap-2 sm:gap-4">
                         <input
                           type="checkbox"
                           checked={selectedUrls.includes(url.id)}
                           onChange={() => toggleSelectUrl(url.id)}
-                          className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500"
+                          className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 rounded focus:ring-blue-500 flex-shrink-0"
                         />
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <a
                             href={url.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 break-all"
+                            className="text-blue-600 hover:text-blue-800 break-all text-sm sm:text-base"
                           >
-                            <span className="text-gray-500">https://</span>
+                            <span className="text-gray-300">https://</span>
                             <span>{url.url.replace(/^https?:\/\//, '')}</span>
                           </a>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           <button
                             onClick={() => toggleQR(url.id)}
-                            className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                            className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
                           >
-                            <QrCode size={16} />
+                            <QrCode size={14} className="sm:w-4 sm:h-4" />
                           </button>
                           {visibleQRs[url.id] && (
                             <div
                               className="cursor-pointer"
                               onClick={() => setShowQRModal(url.url)}
                             >
-                              <QRCode value={url.url} size={48} />
+                              <QRCode value={url.url} size={40} className="sm:w-12 sm:h-12" />
                             </div>
                           )}
                         </div>
                       </div>
                     ))}
                     {categoryUrls.length === 0 && (
-                      <div className="p-4 text-gray-500 text-center">
+                      <div className="p-3 sm:p-4 text-gray-500 text-center text-sm sm:text-base">
                         No URLs in this category
                       </div>
                     )}
