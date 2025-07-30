@@ -67,59 +67,15 @@ const AuthModal = ({ onClose, onLogin }) => {
   );
 };
 
-// QR Code component
+// QR Code component using QR Server API
 const QRCode = ({ value, size = 64 }) => {
-  const createQRCodeSVG = (text, size) => {
-    const gridSize = 21;
-    
-    const pattern = [];
-    for (let i = 0; i < gridSize; i++) {
-      pattern[i] = [];
-      for (let j = 0; j < gridSize; j++) {
-        const hash = (text.charCodeAt(i % text.length) + i + j) % 3;
-        pattern[i][j] = hash < 2;
-      }
-    }
-    
-    const addFinderPattern = (startX, startY) => {
-      for (let i = 0; i < 7; i++) {
-        for (let j = 0; j < 7; j++) {
-          if (startX + i < gridSize && startY + j < gridSize) {
-            pattern[startX + i][startY + j] = 
-              (i === 0 || i === 6 || j === 0 || j === 6) || 
-              (i >= 2 && i <= 4 && j >= 2 && j <= 4);
-          }
-        }
-      }
-    };
-    
-    addFinderPattern(0, 0);
-    addFinderPattern(0, gridSize - 7);
-    addFinderPattern(gridSize - 7, 0);
-    
-    return pattern;
-  };
-  
-  const pattern = createQRCodeSVG(value, size);
-  
   return (
-    <svg width={size} height={size} className="qr-code border">
-      <rect width={size} height={size} fill="white" />
-      {pattern.map((row, i) =>
-        row.map((cell, j) => (
-          cell && (
-            <rect
-              key={`${i}-${j}`}
-              x={j * (size / 21)}
-              y={i * (size / 21)}
-              width={size / 21}
-              height={size / 21}
-              fill="black"
-            />
-          )
-        ))
-      )}
-    </svg>
+    <img
+      src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`}
+      alt={`QR Code for ${value}`}
+      className="qr-code border"
+      style={{ width: size, height: size }}
+    />
   );
 };
 
