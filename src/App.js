@@ -552,16 +552,6 @@ function App() {
     }));
   };
 
-  const expandAll = () => {
-    const allCategories = {};
-    categories.forEach(cat => allCategories[cat] = true);
-    setExpandedCategories(allCategories);
-  };
-
-  const collapseAll = () => {
-    setExpandedCategories({});
-  };
-
   const shareUrls = () => {
     if (selectedUrls.length === 0) return;
     const selectedUrlObjects = urls.filter(u => selectedUrls.includes(u.id));
