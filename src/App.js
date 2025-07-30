@@ -130,7 +130,95 @@ const QRModal = ({ url, onClose }) => {
   );
 };
 
-// Import Modal Component
+// Category Selection Modal Component
+const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
+  const [selectedCategory, setSelectedCategory] = useState('No Cat');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [createNewCategory, setCreateNewCategory] = useState(false);
+
+  const handleConfirm = () => {
+    const categoryToUse = createNewCategory ? newCategoryName.trim() : selectedCategory;
+    if (categoryToUse) {
+      onConfirm(categoryToUse, createNewCategory);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Add URL to Category</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-700 break-all">
+            <span className="text-gray-400">https://</span>
+            <span>{url.replace(/^https?:\/\//, '')}</span>
+          </p>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Choose Category</label>
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setCreateNewCategory(false)}
+              className={`px-3 py-1 rounded text-sm ${!createNewCategory ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            >
+              Existing
+            </button>
+            <button
+              onClick={() => setCreateNewCategory(true)}
+              className={`px-3 py-1 rounded text-sm ${createNewCategory ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            >
+              Create New
+            </button>
+          </div>
+          
+          {createNewCategory ? (
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="New category name"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          ) : (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={createNewCategory && !newCategoryName.trim()}
+            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
+          >
+            Add URL
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 const ImportModal = ({ onClose, onImport, categories }) => {
   const [selectedCategory, setSelectedCategory] = useState('No Cat');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -450,11 +538,12 @@ function App() {
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
   const [categories, setCategories] = useState(['No Cat', 'Save for Later', '5fish', 'GRN', 'Thailand']);
-  const [selectedCategory, setSelectedCategory] = useState('No Cat');
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategorySelectionModal, setShowCategorySelectionModal] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleQRs, setVisibleQRs] = useState({});
   const [allUrlsHidden, setAllUrlsHidden] = useState(false);
@@ -504,19 +593,35 @@ function App() {
     return trimmed ? `https://${trimmed}` : '';
   };
 
-  const addUrl = () => {
-    const normalized = normalizeUrl(inputUrl);
+  const addUrl = (category, createNew = false) => {
+    const normalized = normalizeUrl(pendingUrl);
     if (normalized && !urls.find(u => u.url === normalized)) {
+      // Add new category if needed
+      if (createNew && !categories.includes(category)) {
+        const newCategories = [...categories, category];
+        setCategories(newCategories);
+        saveData(undefined, newCategories);
+      }
+      
       const newUrl = {
         id: Date.now(),
         url: normalized,
-        category: selectedCategory
+        category: category
       };
       const newUrls = [...urls, newUrl];
       setUrls(newUrls);
       saveData(newUrls, undefined);
     }
     setInputUrl('https://');
+    setPendingUrl('');
+  };
+
+  const handleUrlSubmit = () => {
+    const normalized = normalizeUrl(inputUrl);
+    if (normalized) {
+      setPendingUrl(normalized);
+      setShowCategorySelectionModal(true);
+    }
   };
 
   const toggleSelectUrl = (urlId) => {
@@ -678,7 +783,7 @@ function App() {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      addUrl();
+      handleUrlSubmit();
     }
   };
 
@@ -780,38 +885,20 @@ function App() {
                 value={inputUrl}
                 onChange={e => setInputUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Enter URL..."
+                placeholder="Enter URL and press Enter..."
                 className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={!user}
               />
-              <div className="flex gap-2">
-                <select
-                  value={selectedCategory}
-                  onChange={e => setSelectedCategory(e.target.value)}
-                  className="flex-1 sm:flex-none px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={!user}
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => setShowCategoryModal(true)}
-                  disabled={!user}
-                  className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
-                  title="Manage Categories"
-                >
-                  <Settings size={14} />
-                </button>
-              </div>
+              <button
+                onClick={() => setShowCategoryModal(true)}
+                disabled={!user}
+                className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
+                title="Manage Categories"
+              >
+                <Settings size={14} />
+                <span className="hidden sm:inline text-sm">Manage</span>
+              </button>
             </div>
-            <button
-              onClick={addUrl}
-              disabled={!user}
-              className="w-full sm:w-auto sm:self-start px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors text-sm sm:text-base"
-            >
-              Add URL
-            </button>
           </div>
           
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
@@ -997,6 +1084,15 @@ function App() {
             );
           })}
         </div>
+        
+        {showCategorySelectionModal && (
+          <CategorySelectionModal
+            onClose={() => setShowCategorySelectionModal(false)}
+            onConfirm={addUrl}
+            categories={categories}
+            url={pendingUrl}
+          />
+        )}
         
         {showAuthModal && (
           <AuthModal
