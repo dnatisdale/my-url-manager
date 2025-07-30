@@ -406,11 +406,28 @@ function App() {
 
   // Load user from localStorage on app start
   useEffect(() => {
+    const loadUserData = (userEmail = null) => {
+      try {
+        const userKey = userEmail || 'guest';
+        const savedUrls = localStorage.getItem(`urlManagerUrls_${userKey}`);
+        const savedCategories = localStorage.getItem(`urlManagerCategories_${userKey}`);
+        return {
+          urls: savedUrls ? JSON.parse(savedUrls) : [],
+          categories: savedCategories ? JSON.parse(savedCategories) : ['No Cat', 'Save for Later']
+        };
+      } catch (error) {
+        return {
+          urls: [],
+          categories: ['No Cat', 'Save for Later']
+        };
+      }
+    };
+
     const savedUser = localStorage.getItem('urlManagerUser');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
       setUser(userData);
-      const userData2 = loadData(userData.email);
+      const userData2 = loadUserData(userData.email);
       setUrls(userData2.urls);
       setCategories(userData2.categories);
     }
