@@ -1954,4 +1954,4 @@ function App() {
                       ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
                       : 'border-gray-300 bg-white text-black' // default/fallback style
   }
-`}
+}
