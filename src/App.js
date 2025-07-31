@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff, Plus, Sparkles, Globe, Moon, Sun, Palette, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle, Clock, Edit3, Copy, ExternalLink, Zap, Image, Link } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Search, Download, Share2, Trash2, QrCode, ChevronDown, X, LogIn, LogOut, Eye, EyeOff, Plus, Sparkles, Globe, Moon, Sun, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle, Clock, Edit3, Copy, ExternalLink, Zap, Database, HardDrive, Wifi, WifiOff, Activity, BarChart3, TrendingUp, Archive, Save, CloudDownload, CloudUpload, Gauge, MemoryStick } from 'lucide-react';
 
-// Thai translations object (keeping from previous chapters)
+// Enhanced translations with Chapter 5 additions
 const translations = {
   th: {
     appTitle: "ข่าวดี: คลังเก็บลิงก์",
@@ -74,7 +74,6 @@ const translations = {
     darkMode: "โหมดมืด",
     lightMode: "โหมดสว่าง",
     themeMode: "โหมดธีม",
-    // Chapter 4 new translations
     filters: "ตัวกรอง",
     sortBy: "เรียงตาม",
     status: "สถานะ",
@@ -106,7 +105,49 @@ const translations = {
     advancedSearch: "ค้นหาขั้นสูง",
     searchInTitle: "ค้นหาในชื่อ",
     searchInUrl: "ค้นหาในลิงก์",
-    searchInDescription: "ค้นหาในคำอธิบาย"
+    searchInDescription: "ค้นหาในคำอธิบาย",
+    // Chapter 5 new translations
+    performance: "ประสิทธิภาพ",
+    dataManagement: "จัดการข้อมูล",
+    analytics: "การวิเคราะห์",
+    backup: "สำรองข้อมูล",
+    restore: "กู้คืนข้อมูล",
+    offlineMode: "โหมดออฟไลน์",
+    onlineMode: "โหมดออนไลน์",
+    syncStatus: "สถานะซิงค์",
+    dataSize: "ขนาดข้อมูล",
+    totalUrls: "จำนวนลิงก์ทั้งหมด",
+    categories: "หมวดหมู่",
+    workingUrls: "ลิงก์ใช้งานได้",
+    brokenUrls: "ลิงก์เสียหาย",
+    pendingUrls: "ลิงก์รอตรวจสอบ",
+    compressionRatio: "อัตราการบีบอัด",
+    memoryUsage: "การใช้หน่วยความจำ",
+    loadTime: "เวลาโหลด",
+    virtualScrolling: "การเลื่อนเสมือน",
+    enabled: "เปิดใช้งาน",
+    disabled: "ปิดใช้งาน",
+    backupData: "สำรองข้อมูล",
+    restoreData: "กู้คืนข้อมูล",
+    exportData: "ส่งออกข้อมูล",
+    importData: "นำเข้าข้อมูล",
+    dataIntegrity: "ความสมบูรณ์ของข้อมูล",
+    verified: "ตรวจสอบแล้ว",
+    corrupted: "เสียหาย",
+    optimizing: "กำลังเพิ่มประสิทธิภาพ...",
+    compressing: "กำลังบีบอัด...",
+    decompressing: "กำลังขยาย...",
+    indexing: "กำลังสร้างดัชนี...",
+    searching: "กำลังค้นหา...",
+    performanceMode: "โหมดประสิทธิภาพ",
+    standardMode: "โหมดมาตรฐาน",
+    advancedAnalytics: "การวิเคราะห์ขั้นสูง",
+    urlInsights: "ข้อมูลเชิงลึกลิงก์",
+    domainAnalysis: "การวิเคราะห์โดเมน",
+    categoryDistribution: "การกระจายหมวดหมู่",
+    healthReport: "รายงานสุขภาพ",
+    trendAnalysis: "การวิเคราะห์แนวโน้ม",
+    dataVisualization: "การแสดงข้อมูลแบบกราฟิก"
   },
   en: {
     appTitle: "Good News: URL Vault",
@@ -179,7 +220,6 @@ const translations = {
     darkMode: "Dark Mode",
     lightMode: "Light Mode",
     themeMode: "Theme Mode",
-    // Chapter 4 new translations
     filters: "Filters",
     sortBy: "Sort By",
     status: "Status",
@@ -211,11 +251,53 @@ const translations = {
     advancedSearch: "Advanced Search",
     searchInTitle: "Search in Title",
     searchInUrl: "Search in URL",
-    searchInDescription: "Search in Description"
+    searchInDescription: "Search in Description",
+    // Chapter 5 new translations
+    performance: "Performance",
+    dataManagement: "Data Management",
+    analytics: "Analytics",
+    backup: "Backup",
+    restore: "Restore",
+    offlineMode: "Offline Mode",
+    onlineMode: "Online Mode",
+    syncStatus: "Sync Status",
+    dataSize: "Data Size",
+    totalUrls: "Total URLs",
+    categories: "Categories",
+    workingUrls: "Working URLs",
+    brokenUrls: "Broken URLs",
+    pendingUrls: "Pending URLs",
+    compressionRatio: "Compression Ratio",
+    memoryUsage: "Memory Usage",
+    loadTime: "Load Time",
+    virtualScrolling: "Virtual Scrolling",
+    enabled: "Enabled",
+    disabled: "Disabled",
+    backupData: "Backup Data",
+    restoreData: "Restore Data",
+    exportData: "Export Data",
+    importData: "Import Data",
+    dataIntegrity: "Data Integrity",
+    verified: "Verified",
+    corrupted: "Corrupted",
+    optimizing: "Optimizing...",
+    compressing: "Compressing...",
+    decompressing: "Decompressing...",
+    indexing: "Indexing...",
+    searching: "Searching...",
+    performanceMode: "Performance Mode",
+    standardMode: "Standard Mode",
+    advancedAnalytics: "Advanced Analytics",
+    urlInsights: "URL Insights",
+    domainAnalysis: "Domain Analysis",
+    categoryDistribution: "Category Distribution",
+    healthReport: "Health Report",
+    trendAnalysis: "Trend Analysis",
+    dataVisualization: "Data Visualization"
   }
 };
 
-// Advanced theme system (keeping from Chapter 3)
+// Enhanced theme system (keeping from previous chapters)
 const themes = {
   light: {
     bg: 'from-blue-50 via-white to-indigo-50',
@@ -263,84 +345,224 @@ const themes = {
   }
 };
 
-// URL validation and metadata extraction utilities
-const urlUtils = {
-  // Basic URL validation
-  isValidUrl: (string) => {
+// Chapter 5: Advanced Data Management Utilities
+const dataUtils = {
+  // Compress data using simplified algorithm
+  compress: (data) => {
     try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
+      const jsonString = JSON.stringify(data);
+      // Simulate compression with basic encoding
+      const compressed = btoa(jsonString);
+      return {
+        data: compressed,
+        originalSize: jsonString.length,
+        compressedSize: compressed.length,
+        ratio: (compressed.length / jsonString.length * 100).toFixed(1)
+      };
+    } catch (error) {
+      return { data, originalSize: 0, compressedSize: 0, ratio: '100.0' };
     }
   },
 
-  // Extract domain from URL
-  getDomain: (url) => {
+  // Decompress data
+  decompress: (compressedData) => {
     try {
-      return new URL(url).hostname;
-    } catch (_) {
-      return 'Invalid URL';
-    }
-  },
-
-  // Generate favicon URL
-  getFaviconUrl: (url) => {
-    try {
-      const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-    } catch (_) {
+      const decompressed = atob(compressedData);
+      return JSON.parse(decompressed);
+    } catch (error) {
       return null;
     }
   },
 
-  // Simulate URL health check
-  checkUrlHealth: async (url) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
-    
-    // Simulate different response statuses
-    const outcomes = ['working', 'broken', 'working', 'working', 'broken'];
-    const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
-    
-    return {
-      status: randomOutcome,
-      responseTime: Math.floor(Math.random() * 1000 + 100),
-      lastChecked: new Date().toISOString()
-    };
+  // Calculate data size in bytes
+  getDataSize: (data) => {
+    return new Blob([JSON.stringify(data)]).size;
   },
 
-  // Extract URL metadata (simulated)
-  extractMetadata: async (url) => {
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 300));
-    
-    const domain = urlUtils.getDomain(url);
-    const titles = [
-      `${domain} - Home Page`,
-      `Welcome to ${domain}`,
-      `${domain} | Official Website`,
-      `About ${domain}`,
-      `${domain} - News & Updates`
-    ];
-    
-    const descriptions = [
-      `Official website of ${domain} with latest updates and information.`,
-      `Discover more about ${domain} and explore our content.`,
-      `${domain} provides quality content and services.`,
-      `Learn more about what ${domain} has to offer.`,
-      `Stay connected with ${domain} for the latest news.`
-    ];
-    
-    return {
-      title: titles[Math.floor(Math.random() * titles.length)],
-      description: descriptions[Math.floor(Math.random() * descriptions.length)],
-      domain: domain,
-      favicon: urlUtils.getFaviconUrl(url)
+  // Format bytes to human readable
+  formatBytes: (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  },
+
+  // Create data fingerprint for integrity checking
+  createFingerprint: (data) => {
+    const str = JSON.stringify(data);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
+  },
+
+  // Verify data integrity
+  verifyIntegrity: (data, expectedFingerprint) => {
+    const actualFingerprint = dataUtils.createFingerprint(data);
+    return actualFingerprint === expectedFingerprint;
+  },
+
+  // Create backup with metadata
+  createBackup: (urls, categories, metadata = {}) => {
+    const backup = {
+      version: '5.0',
+      timestamp: new Date().toISOString(),
+      urls,
+      categories,
+      metadata: {
+        totalUrls: urls.length,
+        totalCategories: categories.length,
+        ...metadata
+      },
+      fingerprint: dataUtils.createFingerprint({ urls, categories })
     };
+    
+    return dataUtils.compress(backup);
+  },
+
+  // Restore from backup
+  restoreBackup: (backupData) => {
+    try {
+      const decompressed = dataUtils.decompress(backupData.data);
+      if (!decompressed || !decompressed.urls || !decompressed.categories) {
+        throw new Error('Invalid backup format');
+      }
+      
+      // Verify integrity if fingerprint exists
+      if (decompressed.fingerprint) {
+        const dataToVerify = { 
+          urls: decompressed.urls, 
+          categories: decompressed.categories 
+        };
+        if (!dataUtils.verifyIntegrity(dataToVerify, decompressed.fingerprint)) {
+          throw new Error('Data integrity check failed');
+        }
+      }
+      
+      return {
+        success: true,
+        urls: decompressed.urls,
+        categories: decompressed.categories,
+        metadata: decompressed.metadata
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 };
 
-// Advanced components
+// Performance Monitor Hook
+const usePerformanceMonitor = () => {
+  const [metrics, setMetrics] = useState({
+    memoryUsage: 0,
+    renderTime: 0,
+    searchTime: 0,
+    dataSize: 0,
+    compressionRatio: 0
+  });
+
+  const measureRenderTime = useCallback((startTime) => {
+    const endTime = performance.now();
+    setMetrics(prev => ({ ...prev, renderTime: endTime - startTime }));
+  }, []);
+
+  const measureSearchTime = useCallback((startTime) => {
+    const endTime = performance.now();
+    setMetrics(prev => ({ ...prev, searchTime: endTime - startTime }));
+  }, []);
+
+  const updateMemoryUsage = useCallback(() => {
+    if ('memory' in performance) {
+      setMetrics(prev => ({ 
+        ...prev, 
+        memoryUsage: performance.memory.usedJSHeapSize 
+      }));
+    }
+  }, []);
+
+  const updateDataMetrics = useCallback((urls) => {
+    const dataSize = dataUtils.getDataSize(urls);
+    const compressed = dataUtils.compress(urls);
+    setMetrics(prev => ({
+      ...prev,
+      dataSize,
+      compressionRatio: compressed.ratio
+    }));
+  }, []);
+
+  return {
+    metrics,
+    measureRenderTime,
+    measureSearchTime,
+    updateMemoryUsage,
+    updateDataMetrics
+  };
+};
+
+// Virtual Scrolling Hook
+const useVirtualScrolling = (items, itemHeight = 100, containerHeight = 600) => {
+  const [scrollTop, setScrollTop] = useState(0);
+  const [isEnabled, setIsEnabled] = useState(items.length > 50);
+
+  const visibleStart = Math.floor(scrollTop / itemHeight);
+  const visibleEnd = Math.min(
+    visibleStart + Math.ceil(containerHeight / itemHeight) + 1,
+    items.length
+  );
+
+  const visibleItems = useMemo(() => {
+    if (!isEnabled) return items;
+    return items.slice(visibleStart, visibleEnd).map((item, index) => ({
+      ...item,
+      virtualIndex: visibleStart + index
+    }));
+  }, [items, visibleStart, visibleEnd, isEnabled]);
+
+  const totalHeight = items.length * itemHeight;
+  const offsetY = visibleStart * itemHeight;
+
+  return {
+    visibleItems,
+    totalHeight,
+    offsetY,
+    isEnabled,
+    setIsEnabled,
+    onScroll: (e) => setScrollTop(e.target.scrollTop)
+  };
+};
+
+// Offline Status Hook
+const useOfflineStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [lastSync, setLastSync] = useState(new Date());
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setLastSync(new Date());
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return { isOnline, lastSync };
+};
+
+// Enhanced components (keeping core functionality from previous chapters)
 const LoadingSpinner = ({ size = 'sm', isDark }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
@@ -417,10 +639,6 @@ const TouchButton = ({
         return `${baseStyles} bg-gradient-to-r from-yellow-500/80 to-amber-600/80 hover:from-yellow-600/90 hover:to-amber-700/90 text-white border border-yellow-400/30 shadow-yellow-500/30`;
       case 'danger':
         return `${baseStyles} bg-gradient-to-r from-red-500/80 to-rose-600/80 hover:from-red-600/90 hover:to-rose-700/90 text-white border border-red-400/30 shadow-red-500/30`;
-      case 'purple':
-        return `${baseStyles} bg-gradient-to-r from-purple-500/80 to-violet-600/80 hover:from-purple-600/90 hover:to-violet-700/90 text-white border border-purple-400/30 shadow-purple-500/30`;
-      case 'indigo':
-        return `${baseStyles} bg-gradient-to-r from-indigo-500/80 to-blue-600/80 hover:from-indigo-600/90 hover:to-blue-700/90 text-white border border-indigo-400/30 shadow-indigo-500/30`;
       default:
         return baseStyles;
     }
@@ -450,52 +668,258 @@ const TouchButton = ({
   );
 };
 
-// Advanced Search & Filter Component
-const AdvancedFilters = ({ 
-  searchTerm, 
-  setSearchTerm, 
-  filters, 
-  setFilters, 
-  onCheckUrls, 
-  isCheckingUrls,
+// Performance Dashboard Component
+const PerformanceDashboard = ({ 
+  metrics, 
+  urls, 
+  isOnline, 
+  lastSync, 
+  onOptimize,
   t, 
   isDark, 
-  isThaiMode,
+  isThaiMode, 
   themeConfig 
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const getHealthColor = (value, type) => {
+    switch (type) {
+      case 'memory':
+        return value < 50000000 ? 'text-green-500' : value < 100000000 ? 'text-yellow-500' : 'text-red-500';
+      case 'renderTime':
+        return value < 16 ? 'text-green-500' : value < 33 ? 'text-yellow-500' : 'text-red-500';
+      case 'searchTime':
+        return value < 100 ? 'text-green-500' : value < 300 ? 'text-yellow-500' : 'text-red-500';
+      default:
+        return themeConfig.text;
+    }
+  };
+
+  const urlStats = useMemo(() => {
+    const working = urls.filter(u => u.status === 'working').length;
+    const broken = urls.filter(u => u.status === 'broken').length;
+    const pending = urls.filter(u => u.status === 'pending').length;
+    
+    return { working, broken, pending };
+  }, [urls]);
 
   return (
     <div className={`
       ${themeConfig.cardBg} rounded-2xl shadow-xl p-6 mb-6 border glass
       ${themeConfig.cardBorder} ${themeConfig.shadowColor}
     `}>
-      {/* Basic Search */}
-      <div className="relative mb-4">
-        <Search className={`
-          absolute left-4 top-1/2 transform -translate-y-1/2 animate-pulse
-          ${isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-400' : 'text-blue-400'}
-        `} size={20} />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          placeholder={t.searchPlaceholder}
-          className={`
-            w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
-            transition-all duration-300 glass font-medium backdrop-blur-xl
-            ${isDark 
-              ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-              : isThaiMode 
-              ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
-              : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-            }
-          `}
-        />
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <Activity size={24} className={isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-500' : 'text-blue-500'} />
+          <h3 className={`text-xl font-bold ${themeConfig.text}`}>
+            {t.performance}
+          </h3>
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${isOnline ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+            {isOnline ? <Wifi size={14} className="text-green-500" /> : <WifiOff size={14} className="text-red-500" />}
+            <span className={`text-xs font-medium ${isOnline ? 'text-green-500' : 'text-red-500'}`}>
+              {isOnline ? t.onlineMode : t.offlineMode}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <TouchButton
+            onClick={() => setShowDetails(!showDetails)}
+            variant="secondary"
+            size="sm"
+            isDark={isDark}
+            isThaiMode={isThaiMode}
+          >
+            <BarChart3 size={16} />
+            {t.analytics}
+            <ChevronDown size={16} className={`transition-transform duration-300 ${showDetails ? 'rotate-180' : ''}`} />
+          </TouchButton>
+          
+          <TouchButton
+            onClick={onOptimize}
+            variant="primary"
+            size="sm"
+            isDark={isDark}
+            isThaiMode={isThaiMode}
+          >
+            <Zap size={16} />
+            Optimize
+          </TouchButton>
+        </div>
       </div>
 
-      {/* Filter Toggle */}
-      <div className="flex justify-between items-center mb-4">
+      {/* Core Metrics Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} text-center`}>
+          <Database size={24} className={`mx-auto mb-2 ${isDark ? 'text-purple-400' : 'text-blue-500'}`} />
+          <div className={`text-2xl font-bold ${themeConfig.text}`}>{urls.length}</div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.totalUrls}</div>
+        </div>
+
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} text-center`}>
+          <HardDrive size={24} className={`mx-auto mb-2 ${isDark ? 'text-purple-400' : 'text-blue-500'}`} />
+          <div className={`text-2xl font-bold ${themeConfig.text}`}>
+            {dataUtils.formatBytes(metrics.dataSize)}
+          </div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.dataSize}</div>
+        </div>
+
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} text-center`}>
+          <MemoryStick size={24} className={`mx-auto mb-2 ${getHealthColor(metrics.memoryUsage, 'memory')}`} />
+          <div className={`text-2xl font-bold ${getHealthColor(metrics.memoryUsage, 'memory')}`}>
+            {dataUtils.formatBytes(metrics.memoryUsage)}
+          </div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.memoryUsage}</div>
+        </div>
+
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} text-center`}>
+          <Gauge size={24} className={`mx-auto mb-2 ${getHealthColor(metrics.renderTime, 'renderTime')}`} />
+          <div className={`text-2xl font-bold ${getHealthColor(metrics.renderTime, 'renderTime')}`}>
+            {metrics.renderTime.toFixed(1)}ms
+          </div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.loadTime}</div>
+        </div>
+      </div>
+
+      {/* URL Health Overview */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className={`p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-center`}>
+          <CheckCircle size={20} className="mx-auto mb-2 text-green-500" />
+          <div className="text-lg font-bold text-green-500">{urlStats.working}</div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.workingUrls}</div>
+        </div>
+
+        <div className={`p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center`}>
+          <XCircle size={20} className="mx-auto mb-2 text-red-500" />
+          <div className="text-lg font-bold text-red-500">{urlStats.broken}</div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.brokenUrls}</div>
+        </div>
+
+        <div className={`p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center`}>
+          <Clock size={20} className="mx-auto mb-2 text-yellow-500" />
+          <div className="text-lg font-bold text-yellow-500">{urlStats.pending}</div>
+          <div className={`text-sm ${themeConfig.textSecondary}`}>{t.pendingUrls}</div>
+        </div>
+      </div>
+
+      {/* Advanced Analytics */}
+      {showDetails && (
+        <div className="border-t pt-6 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Archive size={16} className={themeConfig.textSecondary} />
+                <span className={`text-sm font-medium ${themeConfig.text}`}>{t.compressionRatio}</span>
+              </div>
+              <div className={`text-xl font-bold ${themeConfig.text}`}>{metrics.compressionRatio}%</div>
+            </div>
+
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Search size={16} className={themeConfig.textSecondary} />
+                <span className={`text-sm font-medium ${themeConfig.text}`}>Search Time</span>
+              </div>
+              <div className={`text-xl font-bold ${getHealthColor(metrics.searchTime, 'searchTime')}`}>
+                {metrics.searchTime.toFixed(1)}ms
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={16} className={themeConfig.textSecondary} />
+                <span className={`text-sm font-medium ${themeConfig.text}`}>Last Sync</span>
+              </div>
+              <div className={`text-sm font-bold ${themeConfig.text}`}>
+                {lastSync.toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Tips */}
+          <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-900/20' : 'bg-blue-50/60'} border border-blue-500/20`}>
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={16} className="text-blue-500" />
+              <span className={`text-sm font-medium ${themeConfig.text}`}>Performance Tips</span>
+            </div>
+            <ul className={`text-sm ${themeConfig.textSecondary} space-y-1`}>
+              <li>• Virtual scrolling is {urls.length > 50 ? 'enabled' : 'disabled'} for your collection size</li>
+              <li>• Regular URL health checks keep your vault optimized</li>
+              <li>• Compress data regularly to improve performance</li>
+              <li>• Remove duplicates to reduce memory usage</li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Data Management Component
+const DataManagementPanel = ({
+  urls,
+  categories,
+  onBackup,
+  onRestore,
+  onOptimize,
+  isProcessing,
+  t,
+  isDark,
+  isThaiMode,
+  themeConfig
+}) => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [backupData, setBackupData] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleExportData = () => {
+    const backup = dataUtils.createBackup(urls, categories);
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `url-vault-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        setBackupData(importedData);
+      } catch (error) {
+        alert('Invalid backup file format');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleRestoreData = () => {
+    if (backupData) {
+      onRestore(backupData);
+      setBackupData(null);
+    }
+  };
+
+  return (
+    <div className={`
+      ${themeConfig.cardBg} rounded-2xl shadow-xl p-6 mb-6 border glass
+      ${themeConfig.cardBorder} ${themeConfig.shadowColor}
+    `}>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <Database size={24} className={isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-500' : 'text-blue-500'} />
+          <h3 className={`text-xl font-bold ${themeConfig.text}`}>
+            {t.dataManagement}
+          </h3>
+        </div>
+        
         <TouchButton
           onClick={() => setShowAdvanced(!showAdvanced)}
           variant="secondary"
@@ -503,94 +927,160 @@ const AdvancedFilters = ({
           isDark={isDark}
           isThaiMode={isThaiMode}
         >
-          <Filter size={16} />
-          {t.advancedSearch}
+          <Settings size={16} />
+          Advanced
           <ChevronDown size={16} className={`transition-transform duration-300 ${showAdvanced ? 'rotate-180' : ''}`} />
-        </TouchButton>
-
-        <TouchButton
-          onClick={onCheckUrls}
-          variant="primary"
-          size="sm"
-          loading={isCheckingUrls}
-          isDark={isDark}
-          isThaiMode={isThaiMode}
-        >
-          <RefreshCw size={16} />
-          {t.checkUrls}
         </TouchButton>
       </div>
 
-      {/* Advanced Filters */}
-      {showAdvanced && (
-        <div className="border-t pt-4 space-y-4">
-          {/* Sort By */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
-              {t.sortBy}
-            </label>
-            <select
-              value={filters.sortBy}
-              onChange={e => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-              className={`
-                w-full p-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                ${isDark 
-                  ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
-                  : isThaiMode 
-                  ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
-                  : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
-                }
-              `}
-            >
-              <option value="dateAdded">{t.dateAdded}</option>
-              <option value="alphabetical">Alphabetical</option>
-              <option value="domain">Domain</option>
-              <option value="status">{t.status}</option>
-            </select>
-          </div>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <TouchButton
+          onClick={handleExportData}
+          variant="success"
+          size="sm"
+          className="flex-col p-4 h-auto"
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <CloudDownload size={24} className="mb-2" />
+          <span className="text-xs">{t.exportData}</span>
+        </TouchButton>
 
-          {/* Status Filter */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
-              {t.urlStatus}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {['all', 'working', 'broken', 'pending'].map(status => (
-                <TouchButton
-                  key={status}
-                  onClick={() => setFilters(prev => ({ ...prev, status }))}
-                  variant={filters.status === status ? 'primary' : 'secondary'}
-                  size="sm"
-                  isDark={isDark}
-                  isThaiMode={isThaiMode}
-                >
-                  {status === 'all' ? 'All' : t[status]}
-                </TouchButton>
-              ))}
+        <TouchButton
+          onClick={() => fileInputRef.current?.click()}
+          variant="primary"
+          size="sm"
+          className="flex-col p-4 h-auto"
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <CloudUpload size={24} className="mb-2" />
+          <span className="text-xs">{t.importData}</span>
+        </TouchButton>
+
+        <TouchButton
+          onClick={onBackup}
+          variant="warning"
+          size="sm"
+          className="flex-col p-4 h-auto"
+          loading={isProcessing}
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <Save size={24} className="mb-2" />
+          <span className="text-xs">{t.backupData}</span>
+        </TouchButton>
+
+        <TouchButton
+          onClick={onOptimize}
+          variant="purple"
+          size="sm"
+          className="flex-col p-4 h-auto"
+          loading={isProcessing}
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <Zap size={24} className="mb-2" />
+          <span className="text-xs">Optimize</span>
+        </TouchButton>
+      </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleImportData}
+        className="hidden"
+      />
+
+      {/* Restore Preview */}
+      {backupData && (
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-green-900/20' : 'bg-green-50/60'} border border-green-500/20 mb-6`}>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle size={16} className="text-green-500" />
+              <span className={`font-medium ${themeConfig.text}`}>Backup Ready to Restore</span>
             </div>
+            <TouchButton
+              onClick={() => setBackupData(null)}
+              variant="secondary"
+              size="sm"
+              className="p-1"
+              isDark={isDark}
+            >
+              <X size={16} />
+            </TouchButton>
           </div>
+          
+          <div className={`text-sm ${themeConfig.textSecondary} mb-4`}>
+            <p>• URLs: {backupData.metadata?.totalUrls || 'Unknown'}</p>
+            <p>• Categories: {backupData.metadata?.totalCategories || 'Unknown'}</p>
+            <p>• Created: {backupData.timestamp ? new Date(backupData.timestamp).toLocaleString() : 'Unknown'}</p>
+          </div>
+          
+          <TouchButton
+            onClick={handleRestoreData}
+            variant="success"
+            size="sm"
+            isDark={isDark}
+            isThaiMode={isThaiMode}
+          >
+            <Archive size={16} />
+            {t.restoreData}
+          </TouchButton>
+        </div>
+      )}
 
-          {/* Search Options */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
-              Search In
-            </label>
-            <div className="space-y-2">
-              {[
-                { key: 'searchInUrl', label: t.searchInUrl },
-                { key: 'searchInTitle', label: t.searchInTitle },
-                { key: 'searchInDescription', label: t.searchInDescription }
-              ].map(option => (
-                <label key={option.key} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={filters[option.key]}
-                    onChange={e => setFilters(prev => ({ ...prev, [option.key]: e.target.checked }))}
-                    className="w-4 h-4 rounded"
-                  />
-                  <span className={`${themeConfig.textSecondary} text-sm`}>{option.label}</span>
-                </label>
-              ))}
+      {/* Advanced Options */}
+      {showAdvanced && (
+        <div className="border-t pt-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Data Integrity */}
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle size={16} className="text-green-500" />
+                <span className={`font-medium ${themeConfig.text}`}>{t.dataIntegrity}</span>
+              </div>
+              <div className={`text-sm ${themeConfig.textSecondary} mb-3`}>
+                Fingerprint: {dataUtils.createFingerprint({ urls, categories }).slice(0, 8)}...
+              </div>
+              <TouchButton
+                onClick={() => {
+                  const fingerprint = dataUtils.createFingerprint({ urls, categories });
+                  alert(`Data fingerprint: ${fingerprint}`);
+                }}
+                variant="secondary"
+                size="sm"
+                isDark={isDark}
+                isThaiMode={isThaiMode}
+              >
+                Verify
+              </TouchButton>
+            </div>
+
+            {/* Compression Info */}
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Archive size={16} className={isDark ? 'text-purple-400' : 'text-blue-500'} />
+                <span className={`font-medium ${themeConfig.text}`}>Compression</span>
+              </div>
+              <div className={`text-sm ${themeConfig.textSecondary} mb-3`}>
+                Original: {dataUtils.formatBytes(dataUtils.getDataSize({ urls, categories }))}
+              </div>
+              <TouchButton
+                onClick={() => {
+                  const compressed = dataUtils.compress({ urls, categories });
+                  alert(`Compressed size: ${dataUtils.formatBytes(compressed.compressedSize)} (${compressed.ratio}% of original)`);
+                }}
+                variant="secondary"
+                size="sm"
+                isDark={isDark}
+                isThaiMode={isThaiMode}
+              >
+                Test Compression
+              </TouchButton>
             </div>
           </div>
         </div>
@@ -599,554 +1089,67 @@ const AdvancedFilters = ({
   );
 };
 
-// URL Preview Component
-const URLPreview = ({ url, isDark, isThaiMode, themeConfig }) => {
-  const [metadata, setMetadata] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    const loadMetadata = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const data = await urlUtils.extractMetadata(url.url);
-        setMetadata(data);
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMetadata();
-  }, [url.url]);
-
-  if (loading) {
-    return (
-      <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} flex items-center gap-3`}>
-        <LoadingSpinner size="sm" isDark={isDark} />
-        <span className={`text-sm ${themeConfig.textSecondary}`}>Loading preview...</span>
-      </div>
-    );
-  }
-
-  if (error || !metadata) {
-    return (
-      <div className={`p-4 rounded-xl ${isDark ? 'bg-red-900/20' : 'bg-red-50/60'} flex items-center gap-3`}>
-        <AlertTriangle size={16} className="text-red-500" />
-        <span className={`text-sm ${themeConfig.textSecondary}`}>Error loading preview</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} space-y-3`}>
-      <div className="flex items-start gap-3">
-        {metadata.favicon && (
-          <img 
-            src={metadata.favicon} 
-            alt="Favicon" 
-            className="w-6 h-6 rounded flex-shrink-0"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        )}
-        <div className="flex-1 min-w-0">
-          <h4 className={`font-medium ${themeConfig.text} truncate`}>
-            {metadata.title}
-          </h4>
-          <p className={`text-sm ${themeConfig.textSecondary} line-clamp-2 mt-1`}>
-            {metadata.description}
-          </p>
-          <p className={`text-xs ${themeConfig.textSecondary} mt-2 opacity-75`}>
-            {metadata.domain}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// URL Status Indicator
-const URLStatusIndicator = ({ status, lastChecked, isDark }) => {
-  const statusConfig = {
-    working: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/20' },
-    broken: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/20' },
-    pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/20' }
-  };
-
-  const config = statusConfig[status] || statusConfig.pending;
-  const Icon = config.icon;
-
-  return (
-    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${config.bg}`}>
-      <Icon size={14} className={config.color} />
-      <span className={`text-xs font-medium ${config.color}`}>
-        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Pending'}
-      </span>
-    </div>
-  );
-};
-
-// Enhanced URL Item with advanced features
-const URLItem = ({ 
-  url, 
-  isSelected, 
-  onSelect, 
-  onQRCode,
-  onSwipeDelete,
-  onEdit,
-  onCheckHealth,
-  theme,
-  isDark,
-  isThaiMode,
+// Virtual Scrolling Container Component
+const VirtualScrollContainer = ({ 
+  items, 
+  renderItem, 
+  itemHeight = 100, 
+  height = 600,
+  isEnabled,
+  onToggle,
   t,
-  showPreview = true
-}) => {
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [showActions, setShowActions] = useState(false);
-
-  const themeConfig = themes[theme];
-
-  const handleTouchStart = (e) => {
-    setStartX(e.touches[0].clientX);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    const currentX = e.touches[0].clientX;
-    const diff = startX - currentX;
-    setSwipeOffset(Math.max(0, Math.min(100, diff)));
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    if (swipeOffset > 50) {
-      onSwipeDelete && onSwipeDelete();
-    }
-    setSwipeOffset(0);
-  };
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(url.url);
-      if (navigator.vibrate) {
-        navigator.vibrate([50, 30, 50]);
-      }
-    } catch (err) {
-      console.error('Failed to copy URL:', err);
-    }
-  };
-
-  return (
-    <div 
-      className="relative overflow-hidden group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Enhanced delete background */}
-      <div className={`
-        absolute right-0 top-0 h-full flex items-center justify-center transition-all duration-300
-        ${isDark 
-          ? 'bg-gradient-to-l from-red-600/90 to-pink-600/90' 
-          : 'bg-gradient-to-l from-red-500/90 to-orange-500/90'
-        }
-        shadow-2xl
-      `}
-           style={{ width: `${swipeOffset}px` }}>
-        <Trash2 size={20} className="text-white animate-pulse" />
-      </div>
-      
-      {/* Main content */}
-      <div 
-        className={`
-          p-5 border-b last:border-b-0 transition-all duration-300 relative overflow-hidden
-          ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
-          ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}
-          ${isDark 
-            ? 'bg-gradient-to-r from-gray-800/40 to-gray-700/40 hover:from-gray-700/60 hover:to-gray-600/60' 
-            : isThaiMode 
-            ? 'bg-gradient-to-r from-white/60 to-yellow-50/60 hover:from-yellow-50/80 hover:to-orange-50/80'
-            : 'bg-gradient-to-r from-white/60 to-blue-50/60 hover:from-blue-50/80 hover:to-indigo-50/80'
-          }
-          ${isHovered ? 'shadow-lg scale-[1.01] transform-gpu' : ''}
-        `}
-        style={{ transform: `translateX(-${swipeOffset}px)` }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Top row - checkbox, URL, actions */}
-        <div className="flex items-start gap-4 mb-3">
-          {/* Enhanced checkbox */}
-          <div className="relative flex-shrink-0 z-10 mt-1">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={onSelect}
-              className={`
-                w-6 h-6 rounded-lg transition-all duration-300
-                ${isDark ? 'accent-purple-500' : isThaiMode ? 'accent-orange-500' : 'accent-blue-500'}
-                hover:scale-110 transform-gpu
-              `}
-            />
-          </div>
-          
-          {/* URL content with metadata */}
-          <div className="flex-1 min-w-0 z-10 space-y-2">
-            {/* URL and favicon */}
-            <div className="flex items-center gap-3">
-              <img 
-                src={urlUtils.getFaviconUrl(url.url)} 
-                alt="Favicon" 
-                className="w-5 h-5 rounded flex-shrink-0"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <a
-                href={url.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`
-                  break-all transition-all duration-300 font-medium hover:underline
-                  ${isDark 
-                    ? 'text-gray-200 hover:text-purple-300' 
-                    : isThaiMode 
-                    ? 'text-orange-800 hover:text-orange-600'
-                    : 'text-gray-800 hover:text-blue-600'
-                  }
-                `}
-              >
-                {url.title || urlUtils.getDomain(url.url)}
-              </a>
-            </div>
-
-            {/* URL domain */}
-            <div className={`text-sm ${themeConfig.textSecondary} flex items-center gap-2`}>
-              <span>{url.url}</span>
-              {url.status && <URLStatusIndicator status={url.status} isDark={isDark} />}
-            </div>
-
-            {/* URL Preview */}
-            {showPreview && isHovered && (
-              <URLPreview 
-                url={url} 
-                isDark={isDark} 
-                isThaiMode={isThaiMode} 
-                themeConfig={themeConfig} 
-              />
-            )}
-          </div>
-          
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 z-10">
-            <TouchButton
-              onClick={copyToClipboard}
-              variant="secondary"
-              size="sm"
-              className="p-2"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <Copy size={16} />
-            </TouchButton>
-
-            <TouchButton
-              onClick={() => window.open(url.url, '_blank')}
-              variant="secondary"
-              size="sm"
-              className="p-2"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <ExternalLink size={16} />
-            </TouchButton>
-
-            <TouchButton
-              onClick={onQRCode}
-              variant="secondary"
-              size="sm"
-              className="p-2"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <QrCode size={16} />
-            </TouchButton>
-
-            <TouchButton
-              onClick={() => setShowActions(!showActions)}
-              variant="secondary"
-              size="sm"
-              className="p-2"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <ChevronDown size={16} className={`transition-transform duration-300 ${showActions ? 'rotate-180' : ''}`} />
-            </TouchButton>
-          </div>
-        </div>
-
-        {/* Expandable actions */}
-        {showActions && (
-          <div className="border-t pt-3 flex flex-wrap gap-2">
-            <TouchButton
-              onClick={onEdit}
-              variant="secondary"
-              size="sm"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <Edit3 size={14} />
-              {t.editUrl}
-            </TouchButton>
-
-            <TouchButton
-              onClick={() => onCheckHealth(url.id)}
-              variant="secondary"
-              size="sm"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              <Zap size={14} />
-              {t.checkNow}
-            </TouchButton>
-
-            {url.lastChecked && (
-              <span className={`text-xs ${themeConfig.textSecondary} flex items-center gap-1 px-3 py-2`}>
-                <Clock size={12} />
-                {t.lastChecked}: {new Date(url.lastChecked).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Bulk Edit Modal
-const BulkEditModal = ({ 
-  selectedUrls, 
-  onClose, 
-  onBulkAction, 
-  categories, 
-  t, 
-  isDark, 
-  isThaiMode,
+  isDark,
   themeConfig 
 }) => {
-  const [bulkAction, setBulkAction] = useState('move');
-  const [targetCategory, setTargetCategory] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleBulkAction = async () => {
-    setIsProcessing(true);
-    await onBulkAction(bulkAction, targetCategory);
-    setIsProcessing(false);
-    onClose();
-  };
+  const { 
+    visibleItems, 
+    totalHeight, 
+    offsetY, 
+    onScroll 
+  } = useVirtualScrolling(items, itemHeight, height);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-2xl font-bold ${themeConfig.text}`}>
-            {t.bulkEdit} ({selectedUrls.length})
-          </h3>
-          <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-3" isDark={isDark}>
-            <X size={20} />
-          </TouchButton>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className={`block text-sm font-medium mb-3 ${themeConfig.text}`}>
-              Action
-            </label>
-            <div className="space-y-2">
-              {[
-                { value: 'move', label: 'Move to Category' },
-                { value: 'delete', label: 'Delete URLs' },
-                { value: 'check', label: 'Check URL Health' },
-                { value: 'export', label: 'Export URLs' }
-              ].map(action => (
-                <label key={action.value} className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="bulkAction"
-                    value={action.value}
-                    checked={bulkAction === action.value}
-                    onChange={e => setBulkAction(e.target.value)}
-                    className="w-4 h-4"
-                  />
-                  <span className={themeConfig.textSecondary}>{action.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {bulkAction === 'move' && (
-            <div>
-              <label className={`block text-sm font-medium mb-3 ${themeConfig.text}`}>
-                Target Category
-              </label>
-              <select
-                value={targetCategory}
-                onChange={e => setTargetCategory(e.target.value)}
-                className={`
-                  w-full p-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                  ${isDark 
-                    ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
-                    : isThaiMode 
-                    ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
-                    : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
-                  }
-                `}
-              >
-                <option value="">Select Category</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <TouchButton
-              onClick={onClose}
-              variant="secondary"
-              size="md"
-              className="flex-1"
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              {t.cancel}
-            </TouchButton>
-            <TouchButton
-              onClick={handleBulkAction}
-              variant="primary"
-              size="md"
-              className="flex-1"
-              loading={isProcessing}
-              disabled={bulkAction === 'move' && !targetCategory}
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-            >
-              {t.confirm}
-            </TouchButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Duplicate Detection Component
-const DuplicateManager = ({ urls, onRemoveDuplicates, t, isDark, isThaiMode, themeConfig }) => {
-  const [duplicates, setDuplicates] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const findDuplicates = useCallback(() => {
-    const urlMap = new Map();
-    const duplicateGroups = [];
-
-    urls.forEach(url => {
-      const normalizedUrl = url.url.toLowerCase().replace(/\/$/, '');
-      if (urlMap.has(normalizedUrl)) {
-        urlMap.get(normalizedUrl).push(url);
-      } else {
-        urlMap.set(normalizedUrl, [url]);
-      }
-    });
-
-    urlMap.forEach(group => {
-      if (group.length > 1) {
-        duplicateGroups.push(group);
-      }
-    });
-
-    setDuplicates(duplicateGroups);
-  }, [urls]);
-
-  useEffect(() => {
-    findDuplicates();
-  }, [findDuplicates]);
-
-  const handleRemoveDuplicates = async () => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing
-    
-    const urlsToKeep = [];
-    const urlsToRemove = [];
-
-    duplicates.forEach(group => {
-      urlsToKeep.push(group[0]); // Keep first occurrence
-      urlsToRemove.push(...group.slice(1)); // Remove duplicates
-    });
-
-    onRemoveDuplicates(urlsToRemove.map(url => url.id));
-    setLoading(false);
-  };
-
-  if (duplicates.length === 0) {
-    return (
-      <div className={`${themeConfig.cardBg} rounded-2xl p-6 border ${themeConfig.cardBorder} text-center`}>
-        <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-        <p className={`${themeConfig.text} font-medium`}>{t.noDuplicates}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${themeConfig.cardBg} rounded-2xl p-6 border ${themeConfig.cardBorder} space-y-4`}>
+    <div className="space-y-4">
+      {/* Virtual Scrolling Controls */}
       <div className="flex justify-between items-center">
-        <h3 className={`text-xl font-bold ${themeConfig.text}`}>
-          {t.foundDuplicates} ({duplicates.length} groups)
-        </h3>
+        <div className={`text-sm ${themeConfig.textSecondary}`}>
+          Showing {visibleItems.length} of {items.length} items
+          {isEnabled && ` (Virtual scrolling active)`}
+        </div>
         <TouchButton
-          onClick={handleRemoveDuplicates}
-          variant="warning"
+          onClick={onToggle}
+          variant="secondary"
           size="sm"
-          loading={loading}
           isDark={isDark}
-          isThaiMode={isThaiMode}
         >
-          <Trash2 size={16} />
-          {t.removeDuplicates}
+          <Eye size={16} />
+          {t.virtualScrolling}: {isEnabled ? t.enabled : t.disabled}
         </TouchButton>
       </div>
 
-      <div className="space-y-3">
-        {duplicates.slice(0, 5).map((group, index) => (
-          <div key={index} className={`p-4 rounded-xl ${isDark ? 'bg-yellow-900/20' : 'bg-yellow-50/60'} border-l-4 border-yellow-500`}>
-            <p className={`font-medium ${themeConfig.text} mb-2`}>
-              Duplicate Group {index + 1} ({group.length} URLs)
-            </p>
-            {group.map((url, urlIndex) => (
-              <div key={url.id} className={`text-sm ${themeConfig.textSecondary} flex items-center gap-2`}>
-                <span className={`w-2 h-2 rounded-full ${urlIndex === 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <span className={urlIndex === 0 ? 'font-medium' : ''}>{url.url}</span>
-                {urlIndex === 0 && <span className="text-green-600 text-xs">(Keep)</span>}
+      {/* Scroll Container */}
+      <div 
+        className="overflow-auto"
+        style={{ height: `${height}px` }}
+        onScroll={onScroll}
+      >
+        <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+          <div style={{ transform: `translateY(${offsetY}px)` }}>
+            {visibleItems.map((item, index) => (
+              <div key={item.id || index} style={{ height: `${itemHeight}px` }}>
+                {renderItem(item, index)}
               </div>
             ))}
           </div>
-        ))}
-        {duplicates.length > 5 && (
-          <p className={`text-sm ${themeConfig.textSecondary} text-center`}>
-            ...and {duplicates.length - 5} more groups
-          </p>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
-// Main App Component with Advanced Features
+// Main App Component with Chapter 5 Enhancements
 function App() {
-  // Theme and visual state (from Chapter 3)
+  // Theme and visual state (from previous chapters)
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   
@@ -1168,9 +1171,8 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [allUrlsHidden, setAllUrlsHidden] = useState(false);
   const [showFAB, setShowFAB] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Chapter 4: Advanced features state
+  // Advanced features state (from Chapter 4)
   const [filters, setFilters] = useState({
     sortBy: 'dateAdded',
     status: 'all',
@@ -1179,8 +1181,17 @@ function App() {
     searchInDescription: false
   });
   const [isCheckingUrls, setIsCheckingUrls] = useState(false);
-  const [showBulkEdit, setShowBulkEdit] = useState(false);
-  const [showDuplicates, setShowDuplicates] = useState(false);
+
+  // Chapter 5: Performance and Data Management State
+  const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false);
+  const [showDataManagement, setShowDataManagement] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [virtualScrollEnabled, setVirtualScrollEnabled] = useState(true);
+  const [performanceMode, setPerformanceMode] = useState(false);
+
+  // Chapter 5: Advanced Hooks
+  const performanceMonitor = usePerformanceMonitor();
+  const { isOnline, lastSync } = useOfflineStatus();
 
   // Computed values
   const isDark = theme === 'dark' || theme === 'thaiDark';
@@ -1189,7 +1200,72 @@ function App() {
   const themeConfig = themes[currentTheme];
   const t = translations[language];
 
-  // Theme and language handlers (from Chapter 3)
+  // Performance optimization: Memoize filtered URLs
+  const filteredUrls = useMemo(() => {
+    const startTime = performance.now();
+    
+    let filtered = urls;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(url => {
+        const searchLower = searchTerm.toLowerCase();
+        const checks = [];
+        
+        if (filters.searchInUrl) {
+          checks.push(url.url.toLowerCase().includes(searchLower));
+        }
+        if (filters.searchInTitle && url.title) {
+          checks.push(url.title.toLowerCase().includes(searchLower));
+        }
+        if (filters.searchInDescription && url.description) {
+          checks.push(url.description.toLowerCase().includes(searchLower));
+        }
+        
+        return checks.some(Boolean);
+      });
+    }
+
+    // Apply status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(url => url.status === filters.status);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'alphabetical':
+          return (a.title || a.url).localeCompare(b.title || b.url);
+        case 'domain':
+          return getDomain(a.url).localeCompare(getDomain(b.url));
+        case 'status':
+          return (a.status || 'pending').localeCompare(b.status || 'pending');
+        case 'dateAdded':
+        default:
+          return new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id);
+      }
+    });
+
+    performanceMonitor.measureSearchTime(startTime);
+    return filtered;
+  }, [urls, searchTerm, filters, performanceMonitor]);
+
+  // Helper function
+  const getDomain = (url) => {
+    try {
+      return new URL(url).hostname;
+    } catch (_) {
+      return 'Invalid URL';
+    }
+  };
+
+  // Update performance metrics when data changes
+  useEffect(() => {
+    performanceMonitor.updateDataMetrics(urls);
+    performanceMonitor.updateMemoryUsage();
+  }, [urls, performanceMonitor]);
+
+  // Theme and language handlers
   const toggleTheme = () => {
     if (isThaiMode) {
       setTheme(theme === 'thai' ? 'thaiDark' : 'thai');
@@ -1222,128 +1298,73 @@ function App() {
     }));
   };
 
-  // Chapter 4: Advanced URL functions
-  const checkAllUrls = async () => {
-    setIsCheckingUrls(true);
+  // Chapter 5: Advanced Data Management Functions
+  const handleOptimizeData = async () => {
+    setIsProcessing(true);
     
-    const urlPromises = urls.map(async (url) => {
-      const health = await urlUtils.checkUrlHealth(url.url);
-      return { ...url, ...health };
-    });
-
-    try {
-      const updatedUrls = await Promise.all(urlPromises);
-      setUrls(updatedUrls);
-    } catch (error) {
-      console.error('Error checking URLs:', error);
-    } finally {
-      setIsCheckingUrls(false);
-    }
-  };
-
-  const checkSingleUrl = async (urlId) => {
-    const urlToCheck = urls.find(u => u.id === urlId);
-    if (!urlToCheck) return;
-
-    const health = await urlUtils.checkUrlHealth(urlToCheck.url);
-    setUrls(prev => prev.map(u => 
-      u.id === urlId ? { ...u, ...health } : u
-    ));
-  };
-
-  const handleBulkAction = async (action, targetCategory) => {
-    switch (action) {
-      case 'move':
-        setUrls(prev => prev.map(url => 
-          selectedUrls.includes(url.id) 
-            ? { ...url, category: targetCategory }
-            : url
-        ));
-        break;
-      case 'delete':
-        if (window.confirm(t.deleteConfirm)) {
-          setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
-        }
-        break;
-      case 'check':
-        const selectedUrlObjects = urls.filter(u => selectedUrls.includes(u.id));
-        const healthPromises = selectedUrlObjects.map(async (url) => {
-          const health = await urlUtils.checkUrlHealth(url.url);
-          return { ...url, ...health };
-        });
-        
-        const updatedUrls = await Promise.all(healthPromises);
-        setUrls(prev => prev.map(url => {
-          const updated = updatedUrls.find(u => u.id === url.id);
-          return updated || url;
-        }));
-        break;
-      case 'export':
-        // Export functionality would go here
-        break;
-    }
-    setSelectedUrls([]);
-  };
-
-  const removeDuplicates = (duplicateIds) => {
-    setUrls(prev => prev.filter(url => !duplicateIds.includes(url.id)));
-  };
-
-  // Enhanced filtering and sorting
-  const getFilteredUrls = () => {
-    let filteredUrls = urls;
-
-    // Apply search filter
-    if (searchTerm) {
-      filteredUrls = filteredUrls.filter(url => {
-        const searchLower = searchTerm.toLowerCase();
-        const checks = [];
-        
-        if (filters.searchInUrl) {
-          checks.push(url.url.toLowerCase().includes(searchLower));
-        }
-        if (filters.searchInTitle && url.title) {
-          checks.push(url.title.toLowerCase().includes(searchLower));
-        }
-        if (filters.searchInDescription && url.description) {
-          checks.push(url.description.toLowerCase().includes(searchLower));
-        }
-        
-        return checks.some(Boolean);
-      });
-    }
-
-    // Apply status filter
-    if (filters.status !== 'all') {
-      filteredUrls = filteredUrls.filter(url => url.status === filters.status);
-    }
-
-    // Apply sorting
-    filteredUrls.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'alphabetical':
-          return (a.title || a.url).localeCompare(b.title || b.url);
-        case 'domain':
-          return urlUtils.getDomain(a.url).localeCompare(urlUtils.getDomain(b.url));
-        case 'status':
-          return (a.status || 'pending').localeCompare(b.status || 'pending');
-        case 'dateAdded':
-        default:
-          return new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id);
+    // Simulate optimization process
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Remove duplicates
+    const seen = new Set();
+    const optimizedUrls = urls.filter(url => {
+      const normalizedUrl = url.url.toLowerCase().replace(/\/$/, '');
+      if (seen.has(normalizedUrl)) {
+        return false;
       }
+      seen.add(normalizedUrl);
+      return true;
     });
-
-    return filteredUrls;
+    
+    setUrls(optimizedUrls);
+    setIsProcessing(false);
+    
+    // Update performance metrics
+    performanceMonitor.updateDataMetrics(optimizedUrls);
   };
 
-  // Basic handlers (simplified from previous chapters)
-  const addUrl = (category, isNewCategory = false) => {
-    const normalized = inputUrl.trim();
-    if (normalized && urlUtils.isValidUrl(normalized) && !urls.find(u => u.url === normalized)) {
-      if (isNewCategory && !categories.includes(category)) {
-        setCategories([...categories, category]);
-      }
-      
+  const handleBackupData = async () => {
+    setIsProcessing(true);
+    
+    // Simulate backup process
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const backup = dataUtils.createBackup(urls, categories, {
+      userEmail: user?.email,
+      appVersion: '5.0',
+      performanceMetrics: performanceMonitor.metrics
+    });
+    
+    // Save to localStorage as backup
+    localStorage.setItem('urlManagerBackup', JSON.stringify(backup));
+    
+    setIsProcessing(false);
+    alert('Backup completed successfully!');
+  };
+
+  const handleRestoreData = async (backupData) => {
+    setIsProcessing(true);
+    
+    // Simulate restore process
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const result = dataUtils.restoreBackup(backupData);
+    
+    if (result.success) {
+      setUrls(result.urls);
+      setCategories(result.categories);
+      alert('Data restored successfully!');
+    } else {
+      alert(`Restore failed: ${result.error}`);
+    }
+    
+    setIsProcessing(false);
+  };
+
+  // Basic URL management (optimized)
+  const addUrl = useCallback((url, category = categories[0]) => {
+    const normalized = url.trim();
+    if (normalized && !urls.find(u => u.url === normalized)) {
       const newUrl = {
         id: Date.now(),
         url: normalized,
@@ -1351,30 +1372,20 @@ function App() {
         dateAdded: new Date().toISOString(),
         status: 'pending'
       };
-      setUrls([...urls, newUrl]);
+      setUrls(prev => [...prev, newUrl]);
       
-      // Enhanced haptic feedback
       if (navigator.vibrate) {
         navigator.vibrate([100, 50, 100]);
       }
     }
-    setInputUrl('https://');
-  };
+  }, [urls, categories]);
 
   const handleUrlSubmit = () => {
     const normalized = inputUrl.trim();
-    if (normalized && urlUtils.isValidUrl(normalized)) {
-      // For demo, just add to first category
-      addUrl(categories[0]);
+    if (normalized && normalized !== 'https://') {
+      addUrl(normalized);
+      setInputUrl('https://');
     }
-  };
-
-  const toggleSelectUrl = (urlId) => {
-    setSelectedUrls(
-      selectedUrls.includes(urlId)
-        ? selectedUrls.filter(id => id !== urlId)
-        : [...selectedUrls, urlId]
-    );
   };
 
   const handleKeyPress = (e) => {
@@ -1383,23 +1394,22 @@ function App() {
     }
   };
 
-  const openQRModal = (url) => {
-    setShowQRModal(url);
+  const toggleSelectUrl = (urlId) => {
+    setSelectedUrls(prev =>
+      prev.includes(urlId)
+        ? prev.filter(id => id !== urlId)
+        : [...prev, urlId]
+    );
   };
 
-  // Get URLs by category with advanced filtering
-  const getUrlsByCategory = () => {
-    const filteredUrls = getFilteredUrls();
+  // Get URLs by category with memoization
+  const urlsByCategory = useMemo(() => {
     const grouped = {};
-    
     categories.forEach(cat => {
       grouped[cat] = filteredUrls.filter(url => url.category === cat);
     });
-    
     return grouped;
-  };
-
-  const urlsByCategory = getUrlsByCategory();
+  }, [categories, filteredUrls]);
 
   // Load user data
   useEffect(() => {
@@ -1410,18 +1420,27 @@ function App() {
     } else {
       setShowAuthModal(true);
     }
-  }, []);
+    
+    // Load sample data for demonstration
+    const sampleUrls = Array.from({ length: 100 }, (_, i) => ({
+      id: Date.now() + i,
+      url: `https://example${i}.com`,
+      category: categories[i % categories.length],
+      dateAdded: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: ['working', 'broken', 'pending'][Math.floor(Math.random() * 3)]
+    }));
+    setUrls(sampleUrls);
+  }, [categories]);
+
+  // Performance mode toggle
+  const togglePerformanceMode = () => {
+    setPerformanceMode(!performanceMode);
+    setVirtualScrollEnabled(!performanceMode);
+  };
 
   return (
     <>
-      {/* Enhanced Google Fonts and Styles */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet"
-      />
-      
+      {/* Enhanced styling */}
       <style jsx>{`
         .font-thai {
           font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
@@ -1434,7 +1453,6 @@ function App() {
           overflow: hidden;
         }
         
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
           width: 8px;
         }
@@ -1461,7 +1479,7 @@ function App() {
         ${isThaiMode ? 'font-thai' : 'font-inter'}
       `}>
         <div className="max-w-6xl mx-auto relative z-10">
-          {/* Enhanced Header */}
+          {/* Enhanced Header with Performance Indicators */}
           <div className={`
             sticky top-0 z-40 border-b p-6 mb-8 glass
             ${themeConfig.headerBg} ${themeConfig.cardBorder}
@@ -1476,12 +1494,22 @@ function App() {
                   `}>
                     {t.appTitle}
                   </h1>
-                  <p className={`
-                    text-sm sm:text-base opacity-80 font-medium
-                    ${themeConfig.textSecondary}
-                  `}>
-                    {t.appSubtitle}
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <p className={`
+                      text-sm sm:text-base opacity-80 font-medium
+                      ${themeConfig.textSecondary}
+                    `}>
+                      {t.appSubtitle}
+                    </p>
+                    
+                    {/* Performance Indicator */}
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${performanceMode ? 'bg-green-500/20' : 'bg-blue-500/20'}`}>
+                      <Zap size={14} className={performanceMode ? 'text-green-500' : 'text-blue-500'} />
+                      <span className={`text-xs font-medium ${performanceMode ? 'text-green-500' : 'text-blue-500'}`}>
+                        {performanceMode ? t.performanceMode : t.standardMode}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -1491,6 +1519,24 @@ function App() {
                   <TouchButton onClick={toggleLanguage} variant="secondary" size="sm" isDark={isDark}>
                     <Globe size={16} />
                     {language === 'th' ? 'ไทย' : 'EN'}
+                  </TouchButton>
+                  
+                  <TouchButton 
+                    onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)} 
+                    variant="secondary" 
+                    size="sm" 
+                    isDark={isDark}
+                  >
+                    <Activity size={16} />
+                  </TouchButton>
+                  
+                  <TouchButton 
+                    onClick={() => setShowDataManagement(!showDataManagement)} 
+                    variant="secondary" 
+                    size="sm" 
+                    isDark={isDark}
+                  >
+                    <Database size={16} />
                   </TouchButton>
                   
                   {user ? (
@@ -1526,27 +1572,44 @@ function App() {
           </div>
 
           <div className="px-6">
-            {/* Advanced Search & Filters */}
-            <AdvancedFilters
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              filters={filters}
-              setFilters={setFilters}
-              onCheckUrls={checkAllUrls}
-              isCheckingUrls={isCheckingUrls}
-              t={t}
-              isDark={isDark}
-              isThaiMode={isThaiMode}
-              themeConfig={themeConfig}
-            />
+            {/* Performance Dashboard */}
+            {showPerformanceDashboard && (
+              <PerformanceDashboard
+                metrics={performanceMonitor.metrics}
+                urls={urls}
+                isOnline={isOnline}
+                lastSync={lastSync}
+                onOptimize={handleOptimizeData}
+                t={t}
+                isDark={isDark}
+                isThaiMode={isThaiMode}
+                themeConfig={themeConfig}
+              />
+            )}
 
-            {/* Advanced Action Bar */}
+            {/* Data Management Panel */}
+            {showDataManagement && (
+              <DataManagementPanel
+                urls={urls}
+                categories={categories}
+                onBackup={handleBackupData}
+                onRestore={handleRestoreData}
+                onOptimize={handleOptimizeData}
+                isProcessing={isProcessing}
+                t={t}
+                isDark={isDark}
+                isThaiMode={isThaiMode}
+                themeConfig={themeConfig}
+              />
+            )}
+
+            {/* Enhanced Input Section */}
             {user && (
               <div className={`
                 ${themeConfig.cardBg} rounded-2xl shadow-xl p-6 mb-6 border glass
                 ${themeConfig.cardBorder} ${themeConfig.shadowColor}
               `}>
-                <div className="flex flex-wrap gap-3 mb-4">
+                <div className="flex gap-3 mb-4">
                   <input
                     type="text"
                     value={inputUrl}
@@ -1554,7 +1617,7 @@ function App() {
                     onKeyPress={handleKeyPress}
                     placeholder={t.enterUrl}
                     className={`
-                      flex-1 min-w-0 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
+                      flex-1 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
                       transition-all duration-300 font-medium glass backdrop-blur-xl
                       ${isDark 
                         ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
@@ -1568,7 +1631,7 @@ function App() {
                   />
                   <TouchButton
                     onClick={handleUrlSubmit}
-                    disabled={!user || !urlUtils.isValidUrl(inputUrl)}
+                    disabled={!user || inputUrl === 'https://'}
                     variant="primary"
                     size="md"
                     isDark={isDark}
@@ -1579,64 +1642,46 @@ function App() {
                   </TouchButton>
                 </div>
 
-                {/* Advanced bulk actions */}
-                {selectedUrls.length > 0 && (
-                  <div className="flex flex-wrap gap-3">
-                    <TouchButton 
-                      onClick={() => setShowBulkEdit(true)}
-                      variant="primary" 
-                      size="sm" 
-                      isDark={isDark} 
-                      isThaiMode={isThaiMode}
-                    >
-                      <Edit3 size={16} />
-                      {t.bulkEdit} ({selectedUrls.length})
-                    </TouchButton>
-                    <TouchButton variant="success" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Share2 size={16} />
-                      {t.share}
-                    </TouchButton>
-                    <TouchButton variant="warning" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Download size={16} />
-                      {t.export}
-                    </TouchButton>
-                    <TouchButton variant="danger" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Trash2 size={16} />
-                      {t.delete}
-                    </TouchButton>
+                {/* Performance Toggle */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <Search 
+                      className={`${isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-400' : 'text-blue-400'}`} 
+                      size={20} 
+                    />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder={t.searchPlaceholder}
+                      className={`
+                        px-4 py-2 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
+                        transition-all duration-300 font-medium glass backdrop-blur-xl
+                        ${isDark 
+                          ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
+                          : isThaiMode 
+                          ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
+                          : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
+                        }
+                      `}
+                    />
                   </div>
-                )}
-
-                <div className="flex flex-wrap gap-3 mt-4">
-                  <TouchButton 
-                    onClick={() => setShowDuplicates(!showDuplicates)}
-                    variant="secondary" 
-                    size="sm" 
-                    isDark={isDark} 
+                  
+                  <TouchButton
+                    onClick={togglePerformanceMode}
+                    variant={performanceMode ? "success" : "secondary"}
+                    size="sm"
+                    isDark={isDark}
                     isThaiMode={isThaiMode}
                   >
-                    <Copy size={16} />
-                    {t.duplicates}
+                    <Zap size={16} />
+                    {performanceMode ? 'Performance' : 'Standard'}
                   </TouchButton>
                 </div>
               </div>
             )}
 
-            {/* Duplicate Manager */}
-            {showDuplicates && (
-              <div className="mb-6">
-                <DuplicateManager
-                  urls={urls}
-                  onRemoveDuplicates={removeDuplicates}
-                  t={t}
-                  isDark={isDark}
-                  isThaiMode={isThaiMode}
-                  themeConfig={themeConfig}
-                />
-              </div>
-            )}
-
-            {/* Enhanced Categories with Advanced URL Items */}
+            {/* Enhanced Categories with Virtual Scrolling */}
             <div className="space-y-6">
               {categories.map(category => {
                 const categoryUrls = urlsByCategory[category] || [];
@@ -1717,34 +1762,112 @@ function App() {
                       </div>
                     </div>
                     
-                    {/* Enhanced expand/collapse */}
+                    {/* Enhanced expand/collapse with Virtual Scrolling */}
                     <div className={`
                       transition-all duration-500 ease-out overflow-hidden
                       ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}
                     `}>
                       <div className={`border-t ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
-                        {categoryUrls.map(url => (
-                          <URLItem
-                            key={url.id}
-                            url={url}
-                            isSelected={selectedUrls.includes(url.id)}
-                            onSelect={() => toggleSelectUrl(url.id)}
-                            onQRCode={() => openQRModal(url.url)}
-                            onSwipeDelete={() => {
-                              setUrls(prev => prev.filter(u => u.id !== url.id));
-                            }}
-                            onEdit={() => {
-                              // Edit functionality would go here
-                            }}
-                            onCheckHealth={checkSingleUrl}
-                            theme={currentTheme}
-                            isDark={isDark}
-                            isThaiMode={isThaiMode}
-                            t={t}
-                            showPreview={true}
-                          />
-                        ))}
-                        {categoryUrls.length === 0 && (
+                        {categoryUrls.length > 0 ? (
+                          performanceMode && categoryUrls.length > 20 ? (
+                            <VirtualScrollContainer
+                              items={categoryUrls}
+                              renderItem={(url) => (
+                                <div className={`
+                                  p-4 border-b last:border-b-0 flex items-center gap-4
+                                  ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}
+                                  hover:bg-gray-50/50 transition-colors duration-200
+                                `}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedUrls.includes(url.id)}
+                                    onChange={() => toggleSelectUrl(url.id)}
+                                    className="w-5 h-5 rounded"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <a
+                                      href={url.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`
+                                        block break-all transition-colors duration-200 font-medium hover:underline
+                                        ${isDark ? 'text-gray-200 hover:text-purple-300' : isThaiMode ? 'text-orange-800 hover:text-orange-600' : 'text-gray-800 hover:text-blue-600'}
+                                      `}
+                                    >
+                                      {url.url}
+                                    </a>
+                                    {url.status && (
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <div className={`w-2 h-2 rounded-full ${
+                                          url.status === 'working' ? 'bg-green-500' :
+                                          url.status === 'broken' ? 'bg-red-500' : 'bg-yellow-500'
+                                        }`}></div>
+                                        <span className={`text-xs ${themeConfig.textSecondary}`}>
+                                          {url.status}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              itemHeight={100}
+                              height={400}
+                              isEnabled={virtualScrollEnabled}
+                              onToggle={() => setVirtualScrollEnabled(!virtualScrollEnabled)}
+                              t={t}
+                              isDark={isDark}
+                              themeConfig={themeConfig}
+                            />
+                          ) : (
+                            categoryUrls.map(url => (
+                              <div key={url.id} className={`
+                                p-4 border-b last:border-b-0 flex items-center gap-4
+                                ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}
+                                hover:bg-gray-50/50 transition-colors duration-200
+                              `}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedUrls.includes(url.id)}
+                                  onChange={() => toggleSelectUrl(url.id)}
+                                  className="w-5 h-5 rounded"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <a
+                                    href={url.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`
+                                      block break-all transition-colors duration-200 font-medium hover:underline
+                                      ${isDark ? 'text-gray-200 hover:text-purple-300' : isThaiMode ? 'text-orange-800 hover:text-orange-600' : 'text-gray-800 hover:text-blue-600'}
+                                    `}
+                                  >
+                                    {url.url}
+                                  </a>
+                                  {url.status && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <div className={`w-2 h-2 rounded-full ${
+                                        url.status === 'working' ? 'bg-green-500' :
+                                        url.status === 'broken' ? 'bg-red-500' : 'bg-yellow-500'
+                                      }`}></div>
+                                      <span className={`text-xs ${themeConfig.textSecondary}`}>
+                                        {url.status}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <TouchButton
+                                  onClick={() => setShowQRModal(url.url)}
+                                  variant="secondary"
+                                  size="sm"
+                                  className="p-2"
+                                  isDark={isDark}
+                                >
+                                  <QrCode size={16} />
+                                </TouchButton>
+                              </div>
+                            ))
+                          )
+                        ) : (
                           <div className={`p-8 text-center text-lg font-medium ${themeConfig.textSecondary}`}>
                             {t.noUrlsInCategory}
                           </div>
@@ -1788,19 +1911,6 @@ function App() {
         </div>
 
         {/* Enhanced Modals */}
-        {showBulkEdit && (
-          <BulkEditModal
-            selectedUrls={selectedUrls}
-            onClose={() => setShowBulkEdit(false)}
-            onBulkAction={handleBulkAction}
-            categories={categories}
-            t={t}
-            isDark={isDark}
-            isThaiMode={isThaiMode}
-            themeConfig={themeConfig}
-          />
-        )}
-
         {showQRModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
@@ -1842,39 +1952,3 @@ function App() {
                       ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
                       : isThaiMode 
                       ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
-                      : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
-                    }
-                  `}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && e.target.value.trim()) {
-                      setUser({ email: e.target.value.trim() });
-                      setShowAuthModal(false);
-                    }
-                  }}
-                />
-              </div>
-              <TouchButton
-                onClick={() => {
-                  const email = document.querySelector('input[type="email"]').value.trim();
-                  if (email) {
-                    setUser({ email });
-                    setShowAuthModal(false);
-                  }
-                }}
-                variant="primary"
-                size="lg"
-                className="w-full"
-                isDark={isDark}
-                isThaiMode={isThaiMode}
-              >
-                {t.signIn}
-              </TouchButton>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-export default App;
