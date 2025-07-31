@@ -11,17 +11,13 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
-    "workbox-webpack-plugin": "^6.6.0"
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:netlify": "react-scripts build && npm run postbuild",
-    "postbuild": "cp public/_redirects build/ 2>/dev/null || echo '_redirects not found, skipping...' && npx workbox generateSW workbox-config.js 2>/dev/null || echo 'Workbox generation skipped'",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "serve": "npm run build && npx serve -s build"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -42,9 +38,8 @@
     ]
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0-alpha.30",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^3.4.1"
   }
 }
