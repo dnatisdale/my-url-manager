@@ -1,5 +1,212 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff, Plus, Sparkles } from 'lucide-react';
+import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff, Plus, Sparkles, Globe } from 'lucide-react';
+
+// Thai translations object
+const translations = {
+  th: {
+    // Header
+    appTitle: "ข่าวดี: คลังเก็บลิงก์",
+    appSubtitle: "Thai Good News URL Vault",
+    
+    // Authentication
+    signInRequired: "🔒 ต้องเข้าสู่ระบบ",
+    welcomeBack: "ยินดีต้อนรับกลับ!",
+    joinUs: "เข้าร่วมกับเรา!",
+    signIn: "เข้าสู่ระบบ",
+    signOut: "ออกจากระบบ",
+    createAccount: "สร้างบัญชี",
+    email: "อีเมล (ใช้เป็น ID บัญชี)",
+    emailPlaceholder: "your@email.com",
+    signingIn: "กำลังเข้าสู่ระบบ...",
+    noAccount: "ไม่มีบัญชี? สร้างใหม่",
+    hasAccount: "มีบัญชีแล้ว? เข้าสู่ระบบ",
+    
+    // Status messages
+    signInMessage: "กรุณาเข้าสู่ระบบเพื่อบันทึกลิงก์และซิงค์ข้อมูลระหว่างอุปกรณ์",
+    syncedToCloud: "ซิงค์กับคลาวด์: ข้อมูลของคุณบันทึกและซิงค์อัตโนมัติในทุกอุปกรณ์",
+    dataWillSync: "📱 ข้อมูลจะซิงค์ในทุกอุปกรณ์ของคุณ",
+    simpleAccount: "🔒 บัญชีแบบง่าย (ไม่ต้องใช้รหัสผ่านสำหรับการทดลอง)",
+    
+    // URL management
+    enterUrl: "ป้อนลิงก์และกด Enter...",
+    addUrl: "เพิ่มลิงก์",
+    searchPlaceholder: "ค้นหาลิงก์และหมวดหมู่...",
+    noUrlsYet: "ยังไม่มีลิงก์",
+    noUrlsMessage: "เพิ่มลิงก์เพื่อเริ่มต้น!",
+    addFirstUrl: "เพิ่มลิงก์แรกของคุณ",
+    
+    // Categories
+    addToCategory: "เพิ่มลิงก์ไปยังหมวดหมู่",
+    chooseCategory: "เลือกหมวดหมู่",
+    createNewCategory: "+ สร้างหมวดหมู่ใหม่",
+    newCategoryName: "ชื่อหมวดหมู่ใหม่",
+    backToExisting: "← กลับไปหมวดหมู่ที่มี",
+    noCategory: "ไม่มีหมวดหมู่",
+    saveForLater: "เก็บไว้ดูทีหลัง",
+    thailand: "ประเทศไทย",
+    
+    // Actions
+    share: "แชร์",
+    export: "ส่งออก",
+    delete: "ลบ",
+    cancel: "ยกเลิก",
+    confirm: "ยืนยัน",
+    selectAll: "เลือกทั้งหมด",
+    deselectAll: "ยกเลิกการเลือก",
+    moveTo: "ย้ายไป...",
+    showAllUrls: "แสดงลิงก์ทั้งหมด",
+    hideAllUrls: "ซ่อนลิงก์ทั้งหมด",
+    
+    // QR Code
+    qrCode: "คิวอาร์โค้ด",
+    small: "เล็ก",
+    large: "ใหญ่",
+    
+    // Import/Export
+    import: "นำเข้า",
+    importUrls: "นำเข้าลิงก์",
+    uploadCsv: "อัปโหลดไฟล์ CSV",
+    pasteUrls: "หรือวางลิงก์ (หนึ่งบรรทัดต่อหนึ่งลิงก์)",
+    category: "หมวดหมู่",
+    existing: "ที่มีอยู่",
+    new: "ใหม่",
+    preview: "ดูตัวอย่าง",
+    urls: "ลิงก์",
+    selected: "เลือกแล้ว",
+    importing: "กำลังนำเข้า",
+    
+    // Management
+    manage: "จัดการ",
+    manageCategories: "จัดการหมวดหมู่",
+    searchCategories: "ค้นหาหมวดหมู่...",
+    add: "เพิ่ม",
+    
+    // Messages
+    noUrlsInCategory: "ไม่มีลิงก์ในหมวดหมู่นี้",
+    deleteConfirm: "คุณแน่ใจหรือไม่ที่จะลบลิงก์ที่เลือก?",
+    refreshing: "กำลังรีเฟรช...",
+    pullToRefresh: "ดึงลงเพื่อรีเฟรช",
+    releaseToRefresh: "ปล่อยเพื่อรีเฟรช",
+    
+    // Install
+    installApp: "ติดตั้งแอป",
+    
+    // Numbers
+    and: "และ",
+    more: "เพิ่มเติม"
+  },
+  en: {
+    // Header
+    appTitle: "Good News: URL Vault",
+    appSubtitle: "ข่าวดี Thai Good News",
+    
+    // Authentication
+    signInRequired: "🔒 Sign In Required",
+    welcomeBack: "Welcome Back!",
+    joinUs: "Join Us!",
+    signIn: "Sign In",
+    signOut: "Sign Out",
+    createAccount: "Create Account",
+    email: "Email (used as your account ID)",
+    emailPlaceholder: "your@email.com",
+    signingIn: "Signing In...",
+    noAccount: "Don't have an account? Create one",
+    hasAccount: "Already have an account? Sign in",
+    
+    // Status messages
+    signInMessage: "Please sign in to save your URLs and sync across devices",
+    syncedToCloud: "Synced to Cloud: Your data automatically saves and syncs across all your devices",
+    dataWillSync: "📱 Your data will sync across all your devices",
+    simpleAccount: "🔒 Simple email-based account (no password needed for demo)",
+    
+    // URL management
+    enterUrl: "Enter URL and press Enter...",
+    addUrl: "Add URL",
+    searchPlaceholder: "Search URLs and categories...",
+    noUrlsYet: "No URLs added yet",
+    noUrlsMessage: "Add some URLs to get started!",
+    addFirstUrl: "Add Your First URL",
+    
+    // Categories
+    addToCategory: "Add URL to Category",
+    chooseCategory: "Choose Category",
+    createNewCategory: "+ Create new category",
+    newCategoryName: "New category name",
+    backToExisting: "← Back to existing categories",
+    noCategory: "No Category",
+    saveForLater: "Save for Later",
+    thailand: "Thailand",
+    
+    // Actions
+    share: "Share",
+    export: "Export",
+    delete: "Delete",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    selectAll: "Select All",
+    deselectAll: "Deselect",
+    moveTo: "Move to...",
+    showAllUrls: "Show All URLs",
+    hideAllUrls: "Hide All URLs",
+    
+    // QR Code
+    qrCode: "QR Code",
+    small: "Small",
+    large: "Large",
+    
+    // Import/Export
+    import: "Import",
+    importUrls: "Import URLs",
+    uploadCsv: "Upload CSV File",
+    pasteUrls: "Or paste URLs (one per line)",
+    category: "Category",
+    existing: "Existing",
+    new: "New",
+    preview: "Preview",
+    urls: "URLs",
+    selected: "selected",
+    importing: "Import",
+    
+    // Management
+    manage: "Manage",
+    manageCategories: "Manage Categories",
+    searchCategories: "Search categories...",
+    add: "Add",
+    
+    // Messages
+    noUrlsInCategory: "No URLs in this category",
+    deleteConfirm: "Are you sure you want to delete the selected URLs?",
+    refreshing: "Refreshing...",
+    pullToRefresh: "Pull to refresh",
+    releaseToRefresh: "Release to refresh",
+    
+    // Install
+    installApp: "Install App",
+    
+    // Numbers
+    and: "and",
+    more: "more"
+  }
+};
+
+// Thai-specific cultural colors
+const thaiColors = {
+  royal: {
+    primary: '#002868', // Thai Royal Blue
+    secondary: '#FFD700', // Thai Gold
+    accent: '#DC143C' // Thai Red
+  },
+  traditional: {
+    primary: '#8B4513', // Thai Brown
+    secondary: '#228B22', // Thai Green
+    accent: '#FF6347' // Thai Orange
+  },
+  modern: {
+    primary: '#4A90E2', // Modern Blue
+    secondary: '#F39C12', // Modern Gold
+    accent: '#E74C3C' // Modern Red
+  }
+};
 
 // Enhanced Loading Component
 const LoadingSpinner = ({ size = 'sm' }) => {
@@ -45,7 +252,8 @@ const TouchButton = ({
     warning: 'bg-yellow-500 hover:bg-yellow-600 text-white',
     danger: 'bg-red-500 hover:bg-red-600 text-white',
     purple: 'bg-purple-500 hover:bg-purple-600 text-white',
-    indigo: 'bg-indigo-500 hover:bg-indigo-600 text-white'
+    indigo: 'bg-indigo-500 hover:bg-indigo-600 text-white',
+    thai: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
   };
 
   const sizes = {
@@ -74,7 +282,24 @@ const TouchButton = ({
   );
 };
 
-// Enhanced Category Card with smooth animations
+// Language Toggle Component
+const LanguageToggle = ({ currentLang, onToggle }) => {
+  return (
+    <TouchButton
+      onClick={onToggle}
+      variant="secondary"
+      size="sm"
+      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20"
+    >
+      <Globe size={16} />
+      <span className="font-medium">
+        {currentLang === 'th' ? 'ไทย' : 'EN'}
+      </span>
+    </TouchButton>
+  );
+};
+
+// Enhanced Category Card with Thai styling
 const CategoryCard = ({ 
   category, 
   urlCount, 
@@ -82,7 +307,9 @@ const CategoryCard = ({
   onToggle, 
   onSelectAll, 
   children,
-  selectedCount = 0
+  selectedCount = 0,
+  t,
+  isThaiMode
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -92,21 +319,31 @@ const CategoryCard = ({
     setTimeout(() => setIsAnimating(false), 300);
   };
 
+  // Thai-specific styling
+  const thaiCategoryStyle = isThaiMode ? 'font-thai' : '';
+
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
       <div
-        className="p-4 cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50 active:from-blue-100 active:to-indigo-100 transition-all duration-200"
+        className={`
+          p-4 cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50 
+          active:from-blue-100 active:to-indigo-100 transition-all duration-200
+          ${isThaiMode ? 'bg-gradient-to-r from-yellow-50 to-orange-50 active:from-yellow-100 active:to-orange-100' : ''}
+        `}
         onClick={handleToggle}
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-            <div>
+            <div className={`
+              w-3 h-3 rounded-full flex-shrink-0
+              ${isThaiMode ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-blue-500'}
+            `}></div>
+            <div className={thaiCategoryStyle}>
               <span className="font-semibold text-gray-800 text-lg">{category}</span>
               <div className="text-sm text-gray-600 flex gap-2">
-                <span>({urlCount} URLs)</span>
+                <span>({urlCount} {t.urls})</span>
                 {selectedCount > 0 && (
-                  <span className="text-blue-600 font-medium">• {selectedCount} selected</span>
+                  <span className="text-blue-600 font-medium">• {selectedCount} {t.selected}</span>
                 )}
               </div>
             </div>
@@ -118,14 +355,18 @@ const CategoryCard = ({
                   e.stopPropagation();
                   onSelectAll();
                 }}
-                variant="primary"
+                variant={isThaiMode ? "thai" : "primary"}
                 size="sm"
                 className="text-xs"
               >
-                {selectedCount === urlCount ? 'Deselect' : 'Select'} All
+                {selectedCount === urlCount ? t.deselectAll : t.selectAll}
               </TouchButton>
             )}
-            <div className={`p-2 bg-white rounded-full shadow-md transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+            <div className={`
+              p-2 bg-white rounded-full shadow-md transition-transform duration-300 
+              ${isExpanded ? 'rotate-180' : ''}
+              ${isThaiMode ? 'bg-gradient-to-r from-yellow-100 to-orange-100' : ''}
+            `}>
               <ChevronDown size={20} className="text-gray-600" />
             </div>
           </div>
@@ -145,13 +386,14 @@ const CategoryCard = ({
   );
 };
 
-// Enhanced URL Item with swipe actions
+// Enhanced URL Item with Thai support
 const URLItem = ({ 
   url, 
   isSelected, 
   onSelect, 
   onQRCode,
-  onSwipeDelete 
+  onSwipeDelete,
+  isThaiMode
 }) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -172,7 +414,6 @@ const URLItem = ({
   const handleTouchEnd = () => {
     setIsDragging(false);
     if (swipeOffset > 50) {
-      // Trigger delete action
       onSwipeDelete && onSwipeDelete();
     }
     setSwipeOffset(0);
@@ -180,8 +421,11 @@ const URLItem = ({
 
   return (
     <div className="relative overflow-hidden">
-      {/* Delete background */}
-      <div className="absolute right-0 top-0 h-full bg-red-500 flex items-center justify-center"
+      {/* Delete background with Thai styling */}
+      <div className={`
+        absolute right-0 top-0 h-full flex items-center justify-center
+        ${isThaiMode ? 'bg-gradient-to-l from-red-500 to-orange-500' : 'bg-red-500'}
+      `}
            style={{ width: `${swipeOffset}px` }}>
         <Trash2 size={20} className="text-white" />
       </div>
@@ -193,13 +437,14 @@ const URLItem = ({
           transition-transform duration-200 bg-white
           ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
           active:bg-gray-50
+          ${isThaiMode ? 'hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50' : ''}
         `}
         style={{ transform: `translateX(-${swipeOffset}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Enhanced checkbox */}
+        {/* Enhanced checkbox with Thai styling */}
         <div className="relative flex-shrink-0">
           <input
             type="checkbox"
@@ -209,7 +454,10 @@ const URLItem = ({
           />
           {isSelected && (
             <div className="absolute inset-0 pointer-events-none">
-              <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
+              <div className={`
+                w-6 h-6 rounded-lg flex items-center justify-center
+                ${isThaiMode ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-blue-500'}
+              `}>
                 <div className="w-3 h-3 border-2 border-white rounded-sm"></div>
               </div>
             </div>
@@ -229,7 +477,7 @@ const URLItem = ({
           </a>
         </div>
         
-        {/* QR Code button */}
+        {/* QR Code button with Thai styling */}
         <TouchButton
           onClick={(e) => {
             e.preventDefault();
@@ -237,7 +485,10 @@ const URLItem = ({
           }}
           variant="secondary"
           size="sm"
-          className="flex-shrink-0 p-3 bg-gray-100 hover:bg-gray-200 text-gray-700"
+          className={`
+            flex-shrink-0 p-3 text-gray-700
+            ${isThaiMode ? 'bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200' : 'bg-gray-100 hover:bg-gray-200'}
+          `}
         >
           <QrCode size={18} />
         </TouchButton>
@@ -246,8 +497,8 @@ const URLItem = ({
   );
 };
 
-// Floating Action Button
-const FloatingActionButton = ({ onClick, visible = true }) => {
+// Floating Action Button with Thai styling
+const FloatingActionButton = ({ onClick, visible = true, isThaiMode }) => {
   return (
     <div className={`
       fixed bottom-6 right-6 z-40 transition-all duration-300
@@ -257,7 +508,13 @@ const FloatingActionButton = ({ onClick, visible = true }) => {
         onClick={onClick}
         variant="primary"
         size="lg"
-        className="w-16 h-16 rounded-full shadow-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+        className={`
+          w-16 h-16 rounded-full shadow-2xl
+          ${isThaiMode 
+            ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700' 
+            : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
+          }
+        `}
       >
         <Plus size={24} />
       </TouchButton>
@@ -265,8 +522,8 @@ const FloatingActionButton = ({ onClick, visible = true }) => {
   );
 };
 
-// Pull to refresh component
-const PullToRefresh = ({ onRefresh, children }) => {
+// Pull to refresh component with Thai text
+const PullToRefresh = ({ onRefresh, children, t }) => {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -314,13 +571,13 @@ const PullToRefresh = ({ onRefresh, children }) => {
         {isRefreshing ? (
           <>
             <LoadingSpinner size="md" />
-            <span className="mt-2">Refreshing...</span>
+            <span className="mt-2">{t.refreshing}</span>
           </>
         ) : (
           <>
             <Sparkles size={24} />
             <span className="mt-1">
-              {pullDistance > 60 ? 'Release to refresh' : 'Pull to refresh'}
+              {pullDistance > 60 ? t.releaseToRefresh : t.pullToRefresh}
             </span>
           </>
         )}
@@ -333,8 +590,8 @@ const PullToRefresh = ({ onRefresh, children }) => {
   );
 };
 
-// Simple Auth Modal Component (keeping original functionality)
-const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
+// Enhanced Auth Modal with Thai support
+const AuthModal = ({ onClose, onLogin, mandatory = false, t, isThaiMode }) => {
   const [email, setEmail] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -342,7 +599,6 @@ const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
   const handleSubmit = async () => {
     if (email.trim()) {
       setLoading(true);
-      // Simulate network delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       onLogin(email.trim());
       onClose();
@@ -351,10 +607,16 @@ const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl transform animate-pulse">
+      <div className={`
+        bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl transform animate-pulse
+        ${isThaiMode ? 'bg-gradient-to-br from-white to-yellow-50' : ''}
+      `}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800">
-            {mandatory ? '🔒 Sign In Required' : (isLogin ? 'Welcome Back!' : 'Join Us!')}
+          <h3 className={`
+            text-xl font-bold text-gray-800
+            ${isThaiMode ? 'font-thai' : ''}
+          `}>
+            {mandatory ? t.signInRequired : (isLogin ? t.welcomeBack : t.joinUs)}
           </h3>
           {!mandatory && (
             <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-2">
@@ -364,24 +626,33 @@ const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
         </div>
 
         {mandatory && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-            <p className="text-yellow-800 font-medium">
-              Sign in is required to use this app and sync your URLs across devices.
+          <div className={`
+            mb-6 p-4 border rounded-xl
+            ${isThaiMode ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-50 border-yellow-200'}
+          `}>
+            <p className={`
+              font-medium
+              ${isThaiMode ? 'text-yellow-800 font-thai' : 'text-yellow-800'}
+            `}>
+              {t.signInMessage}
             </p>
           </div>
         )}
 
         <div>
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-3 text-gray-700">
-              Email (used as your account ID)
+            <label className={`
+              block text-sm font-semibold mb-3 text-gray-700
+              ${isThaiMode ? 'font-thai' : ''}
+            `}>
+              {t.email}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="your@email.com"
+              placeholder={t.emailPlaceholder}
               className="w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               disabled={loading}
             />
@@ -389,13 +660,13 @@ const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
 
           <TouchButton
             onClick={handleSubmit}
-            variant="primary"
+            variant={isThaiMode ? "thai" : "primary"}
             size="lg"
             className="w-full"
             loading={loading}
             disabled={!email.trim()}
           >
-            {loading ? 'Signing In...' : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? t.signingIn : (isLogin ? t.signIn : t.createAccount)}
           </TouchButton>
         </div>
 
@@ -403,25 +674,29 @@ const AuthModal = ({ onClose, onLogin, mandatory = false }) => {
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+              className={`
+                text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200
+                ${isThaiMode ? 'font-thai' : ''}
+              `}
             >
-              {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
+              {isLogin ? t.noAccount : t.hasAccount}
             </button>
           </div>
         )}
 
-        <div className="mt-6 text-xs text-gray-500 bg-gray-50 p-4 rounded-xl">
-          <p className="flex items-center gap-2">📱 Your data will sync across all your devices</p>
-          <p className="flex items-center gap-2 mt-1">🔒 Simple email-based account (no password needed for demo)</p>
+        <div className={`
+          mt-6 text-xs text-gray-500 p-4 rounded-xl
+          ${isThaiMode ? 'bg-yellow-50 font-thai' : 'bg-gray-50'}
+        `}>
+          <p className="flex items-center gap-2">{t.dataWillSync}</p>
+          <p className="flex items-center gap-2 mt-1">{t.simpleAccount}</p>
         </div>
       </div>
     </div>
   );
 };
 
-// Keep other modals from original (QRCode, CategorySelection, etc.) but I'll focus on the main app for mobile enhancements
-
-// QR Code component using QR Server API
+// QR Code component
 const QRCode = ({ value, size = 64 }) => {
   return (
     <img
@@ -433,22 +708,33 @@ const QRCode = ({ value, size = 64 }) => {
   );
 };
 
-// Enhanced QR Modal with mobile optimizations
-const QRModal = ({ url, onClose }) => {
+// Enhanced QR Modal with Thai support
+const QRModal = ({ url, onClose, t, isThaiMode }) => {
   const [qrSize, setQrSize] = useState('large');
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl">
+      <div className={`
+        bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl
+        ${isThaiMode ? 'bg-gradient-to-br from-white to-yellow-50' : ''}
+      `}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800">QR Code</h3>
+          <h3 className={`
+            text-xl font-bold text-gray-800
+            ${isThaiMode ? 'font-thai' : ''}
+          `}>
+            {t.qrCode}
+          </h3>
           <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-2">
             <X size={20} />
           </TouchButton>
         </div>
         
         <div className="text-center mb-6">
-          <div className="bg-gray-50 p-4 rounded-xl inline-block">
+          <div className={`
+            p-4 rounded-xl inline-block
+            ${isThaiMode ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : 'bg-gray-50'}
+          `}>
             <QRCode value={url} size={qrSize === 'large' ? 200 : 150} />
           </div>
         </div>
@@ -456,21 +742,24 @@ const QRModal = ({ url, onClose }) => {
         <div className="flex justify-center gap-3 mb-6">
           <TouchButton
             onClick={() => setQrSize('small')}
-            variant={qrSize === 'small' ? 'primary' : 'secondary'}
+            variant={qrSize === 'small' ? (isThaiMode ? 'thai' : 'primary') : 'secondary'}
             size="sm"
           >
-            Small
+            {t.small}
           </TouchButton>
           <TouchButton
             onClick={() => setQrSize('large')}
-            variant={qrSize === 'large' ? 'primary' : 'secondary'}
+            variant={qrSize === 'large' ? (isThaiMode ? 'thai' : 'primary') : 'secondary'}
             size="sm"
           >
-            Large
+            {t.large}
           </TouchButton>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-xl">
+        <div className={`
+          p-4 rounded-xl
+          ${isThaiMode ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : 'bg-gray-50'}
+        `}>
           <p className="text-sm text-gray-600 break-all text-center font-mono">{url}</p>
         </div>
       </div>
@@ -478,9 +767,9 @@ const QRModal = ({ url, onClose }) => {
   );
 };
 
-// Simple placeholder modals (keeping original functionality)
-const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
-  const [selectedCategory, setSelectedCategory] = useState('No Category');
+// Category Selection Modal with Thai support
+const CategorySelectionModal = ({ onClose, onConfirm, categories, url, t, isThaiMode }) => {
+  const [selectedCategory, setSelectedCategory] = useState(t.noCategory);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
@@ -495,15 +784,26 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl">
+      <div className={`
+        bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl
+        ${isThaiMode ? 'bg-gradient-to-br from-white to-yellow-50' : ''}
+      `}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800">Add URL to Category</h3>
+          <h3 className={`
+            text-xl font-bold text-gray-800
+            ${isThaiMode ? 'font-thai' : ''}
+          `}>
+            {t.addToCategory}
+          </h3>
           <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-2">
             <X size={20} />
           </TouchButton>
         </div>
 
-        <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+        <div className={`
+          mb-6 p-4 rounded-xl
+          ${isThaiMode ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : 'bg-gray-50'}
+        `}>
           <p className="text-sm text-gray-700 break-all">
             <span className="text-gray-400">https://</span>
             <span className="font-medium">{url.replace(/^https?:\/\//, '')}</span>
@@ -511,14 +811,22 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-semibold mb-3 text-gray-700">Choose Category</label>
+          <label className={`
+            block text-sm font-semibold mb-3 text-gray-700
+            ${isThaiMode ? 'font-thai' : ''}
+          `}>
+            {t.chooseCategory}
+          </label>
           
           {!showNewCategoryInput ? (
             <>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                className={`
+                  w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3
+                  ${isThaiMode ? 'font-thai' : ''}
+                `}
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -530,7 +838,7 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
                 size="sm"
                 className="w-full"
               >
-                + Create new category
+                {t.createNewCategory}
               </TouchButton>
             </>
           ) : (
@@ -539,8 +847,11 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="New category name"
-                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                placeholder={t.newCategoryName}
+                className={`
+                  w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3
+                  ${isThaiMode ? 'font-thai' : ''}
+                `}
                 autoFocus
               />
               <TouchButton
@@ -549,7 +860,7 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
                 size="sm"
                 className="w-full"
               >
-                ← Back to existing categories
+                {t.backToExisting}
               </TouchButton>
             </>
           )}
@@ -562,16 +873,16 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
             size="md"
             className="flex-1"
           >
-            Cancel
+            {t.cancel}
           </TouchButton>
           <TouchButton
             onClick={handleConfirm}
             disabled={showNewCategoryInput && !newCategoryName.trim()}
-            variant="primary"
+            variant={isThaiMode ? "thai" : "primary"}
             size="md"
             className="flex-1"
           >
-            Add URL
+            {t.addUrl}
           </TouchButton>
         </div>
       </div>
@@ -579,18 +890,30 @@ const CategorySelectionModal = ({ onClose, onConfirm, categories, url }) => {
   );
 };
 
-// Main App Component with Mobile Enhancements
+// Main App Component with Thai Enhancement
 function App() {
+  // Language state
+  const [language, setLanguage] = useState('en');
+  const [isThaiMode, setIsThaiMode] = useState(false);
+  
+  // App state
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
-
-  // App state
   const [urls, setUrls] = useState([]);
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(['No Category', 'Save for Later', '5fish', 'GRN', 'Thailand']);
+  
+  // Thai-enhanced categories
+  const [categories, setCategories] = useState([
+    language === 'th' ? 'ไม่มีหมวดหมู่' : 'No Category',
+    language === 'th' ? 'เก็บไว้ดูทีหลัง' : 'Save for Later',
+    '5fish',
+    'GRN',
+    language === 'th' ? 'ประเทศไทย' : 'Thailand'
+  ]);
+  
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
   const [showCategorySelectionModal, setShowCategorySelectionModal] = useState(false);
@@ -599,10 +922,32 @@ function App() {
   const [allUrlsHidden, setAllUrlsHidden] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Mobile-specific state
   const [showFAB, setShowFAB] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Get current translations
+  const t = translations[language];
+
+  // Language toggle handler
+  const toggleLanguage = () => {
+    const newLang = language === 'en' ? 'th' : 'en';
+    setLanguage(newLang);
+    setIsThaiMode(newLang === 'th');
+    
+    // Update categories with translated names
+    setCategories(prev => prev.map(cat => {
+      if (cat === 'No Category' || cat === 'ไม่มีหมวดหมู่') {
+        return newLang === 'th' ? 'ไม่มีหมวดหมู่' : 'No Category';
+      }
+      if (cat === 'Save for Later' || cat === 'เก็บไว้ดูทีหลัง') {
+        return newLang === 'th' ? 'เก็บไว้ดูทีหลัง' : 'Save for Later';
+      }
+      if (cat === 'Thailand' || cat === 'ประเทศไทย') {
+        return newLang === 'th' ? 'ประเทศไทย' : 'Thailand';
+      }
+      return cat;
+    }));
+  };
 
   // Scroll handler for FAB visibility
   useEffect(() => {
@@ -610,7 +955,6 @@ function App() {
       const currentScrollY = window.scrollY;
       setScrollY(currentScrollY);
       
-      // Hide FAB when scrolling down, show when scrolling up
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowFAB(false);
       } else {
@@ -624,7 +968,7 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // PWA Install Event Listener (keeping original)
+  // PWA Install Event Listener
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
@@ -646,13 +990,12 @@ function App() {
     };
   }, []);
 
-  // Load user data (simplified for demo)
+  // Load user data
   useEffect(() => {
     const savedUser = localStorage.getItem('urlManagerUser');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
       setUser(userData);
-      // Load user-specific data here
     } else {
       setShowAuthModal(true);
     }
@@ -671,7 +1014,7 @@ function App() {
     setSelectedUrls([]);
   };
 
-  // URL management functions (simplified for demo)
+  // URL management functions
   const normalizeUrl = (url) => {
     let trimmed = url.trim().replaceAll(' ', '');
     if (!trimmed || trimmed === 'https://') return '';
@@ -680,7 +1023,6 @@ function App() {
   };
 
   const playChimeSound = () => {
-    // Haptic feedback for mobile
     if (navigator.vibrate) {
       navigator.vibrate([50, 30, 50]);
     }
@@ -792,7 +1134,6 @@ function App() {
 
   const handleRefresh = async () => {
     setIsLoading(true);
-    // Simulate refresh
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
   };
@@ -810,264 +1151,372 @@ function App() {
   const urlsByCategory = getUrlsByCategory();
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50" style={{ fontFamily: 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif' }}>
-        <div className="max-w-4xl mx-auto pb-24">
-          {/* Enhanced Header */}
-          <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 mb-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  ข่าวดี Thai: Good News
-                </h1>
-                
-                <div className="flex items-center gap-2">
-                  {user ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 px-3 py-2 bg-green-100 rounded-xl">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium text-green-700 truncate max-w-20">
-                          {user.email.split('@')[0]}
-                        </span>
+    <>
+      {/* Google Fonts for Thai typography */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+      
+      <style jsx>{`
+        .font-thai {
+          font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+        }
+      `}</style>
+
+      <PullToRefresh onRefresh={handleRefresh} t={t}>
+        <div className={`
+          min-h-screen pb-24
+          ${isThaiMode 
+            ? 'bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 font-thai' 
+            : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'
+          }
+        `} style={{ fontFamily: isThaiMode ? "'Sarabun', 'Noto Sans Thai', system-ui, sans-serif" : "'ui-rounded', 'SF Pro Rounded', system-ui, sans-serif" }}>
+          <div className="max-w-4xl mx-auto">
+            {/* Enhanced Header with Thai styling */}
+            <div className={`
+              sticky top-0 z-30 backdrop-blur-md border-b p-4 mb-6
+              ${isThaiMode 
+                ? 'bg-gradient-to-r from-yellow-100/80 to-orange-100/80 border-orange-200' 
+                : 'bg-white/80 border-gray-200'
+              }
+            `}>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h1 className={`
+                      text-xl sm:text-2xl font-bold
+                      ${isThaiMode 
+                        ? 'bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent font-thai' 
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'
+                      }
+                    `}>
+                      {t.appTitle}
+                    </h1>
+                    <p className={`
+                      text-sm opacity-75
+                      ${isThaiMode ? 'text-orange-700 font-thai' : 'text-blue-700'}
+                    `}>
+                      {t.appSubtitle}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <LanguageToggle currentLang={language} onToggle={toggleLanguage} />
+                    
+                    {user ? (
+                      <div className="flex items-center gap-2">
+                        <div className={`
+                          flex items-center gap-2 px-3 py-2 rounded-xl
+                          ${isThaiMode ? 'bg-orange-100' : 'bg-green-100'}
+                        `}>
+                          <div className={`
+                            w-2 h-2 rounded-full animate-pulse
+                            ${isThaiMode ? 'bg-orange-500' : 'bg-green-500'}
+                          `}></div>
+                          <span className={`
+                            text-sm font-medium truncate max-w-20
+                            ${isThaiMode ? 'text-orange-700 font-thai' : 'text-green-700'}
+                          `}>
+                            {user.email.split('@')[0]}
+                          </span>
+                        </div>
+                        <TouchButton
+                          onClick={handleLogout}
+                          variant="danger"
+                          size="sm"
+                          className="p-2"
+                        >
+                          <LogOut size={16} />
+                        </TouchButton>
                       </div>
+                    ) : (
                       <TouchButton
-                        onClick={handleLogout}
-                        variant="danger"
+                        onClick={() => setShowAuthModal(true)}
+                        variant={isThaiMode ? "thai" : "primary"}
+                        size="sm"
+                      >
+                        <LogIn size={16} />
+                        <span className="hidden sm:inline">{t.signIn}</span>
+                      </TouchButton>
+                    )}
+                    
+                    {showInstallButton && (
+                      <TouchButton
+                        onClick={() => {/* Install logic */}}
+                        variant="purple"
                         size="sm"
                         className="p-2"
                       >
-                        <LogOut size={16} />
+                        📱
                       </TouchButton>
-                    </div>
-                  ) : (
-                    <TouchButton
-                      onClick={() => setShowAuthModal(true)}
-                      variant="primary"
-                      size="sm"
-                    >
-                      <LogIn size={16} />
-                      <span className="hidden sm:inline">Sign In</span>
-                    </TouchButton>
-                  )}
-                  
-                  {showInstallButton && (
-                    <TouchButton
-                      onClick={() => {/* Install logic */}}
-                      variant="purple"
-                      size="sm"
-                      className="p-2"
-                    >
-                      📱
-                    </TouchButton>
-                  )}
+                    )}
+                  </div>
+                </div>
+
+                {/* Enhanced Search with Thai styling */}
+                <div className="relative">
+                  <Search className={`
+                    absolute left-4 top-1/2 transform -translate-y-1/2
+                    ${isThaiMode ? 'text-orange-400' : 'text-gray-400'}
+                  `} size={18} />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    placeholder={t.searchPlaceholder}
+                    className={`
+                      w-full pl-12 pr-4 py-3 border-2 rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 backdrop-blur-sm
+                      ${isThaiMode 
+                        ? 'border-orange-200 focus:ring-orange-500 bg-white/70 font-thai' 
+                        : 'border-gray-200 focus:ring-blue-500 bg-white/70'
+                      }
+                    `}
+                  />
                 </div>
               </div>
-
-              {/* Enhanced Search */}
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Search URLs and categories..."
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/70 backdrop-blur-sm"
-                />
-              </div>
             </div>
-          </div>
 
-          <div className="px-4">
-            {/* Status indicators */}
-            {!user && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
-                <p className="text-yellow-800 font-medium flex items-center gap-2">
-                  🔒 Please sign in to save your URLs and sync across devices
-                </p>
-              </div>
-            )}
-            
-            {user && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-200">
-                <p className="text-sm text-blue-700 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <strong>Synced to Cloud:</strong> Your data automatically saves and syncs across all your devices
-                </p>
-              </div>
-            )}
+            <div className="px-4">
+              {/* Status indicators with Thai styling */}
+              {!user && (
+                <div className={`
+                  mb-6 p-4 border rounded-2xl
+                  ${isThaiMode ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-50 border-yellow-200'}
+                `}>
+                  <p className={`
+                    font-medium flex items-center gap-2
+                    ${isThaiMode ? 'text-yellow-800 font-thai' : 'text-yellow-800'}
+                  `}>
+                    🔒 {t.signInMessage}
+                  </p>
+                </div>
+              )}
+              
+              {user && (
+                <div className={`
+                  mb-6 p-4 rounded-2xl border
+                  ${isThaiMode ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}
+                `}>
+                  <p className={`
+                    text-sm flex items-center gap-2
+                    ${isThaiMode ? 'text-orange-700 font-thai' : 'text-blue-700'}
+                  `}>
+                    <div className={`
+                      w-2 h-2 rounded-full animate-pulse
+                      ${isThaiMode ? 'bg-orange-500' : 'bg-blue-500'}
+                    `}></div>
+                    <strong>{t.syncedToCloud}</strong>
+                  </p>
+                </div>
+              )}
 
-            {/* URL Input Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
-              <div className="flex gap-3 mb-4">
-                <input
-                  type="text"
-                  value={inputUrl}
-                  onChange={e => setInputUrl(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Enter URL and press Enter..."
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  disabled={!user}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  inputMode="url"
-                />
-                <TouchButton
-                  onClick={handleUrlSubmit}
-                  disabled={!user || inputUrl === 'https://'}
-                  variant="primary"
-                  size="md"
-                  className="px-6"
-                >
-                  Add
-                </TouchButton>
-              </div>
-
-              {/* Action buttons */}
-              {selectedUrls.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <TouchButton variant="success" size="sm">
-                    <Share2 size={16} />
-                    Share ({selectedUrls.length})
+              {/* URL Input Card with Thai styling */}
+              <div className={`
+                bg-white rounded-2xl shadow-lg p-6 mb-6 border
+                ${isThaiMode ? 'border-orange-100 bg-gradient-to-br from-white to-yellow-50' : 'border-gray-100'}
+              `}>
+                <div className="flex gap-3 mb-4">
+                  <input
+                    type="text"
+                    value={inputUrl}
+                    onChange={e => setInputUrl(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder={t.enterUrl}
+                    className={`
+                      flex-1 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200
+                      ${isThaiMode 
+                        ? 'border-orange-200 focus:ring-orange-500 font-thai' 
+                        : 'border-gray-200 focus:ring-blue-500'
+                      }
+                    `}
+                    disabled={!user}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    inputMode="url"
+                  />
+                  <TouchButton
+                    onClick={handleUrlSubmit}
+                    disabled={!user || inputUrl === 'https://'}
+                    variant={isThaiMode ? "thai" : "primary"}
+                    size="md"
+                    className="px-6"
+                  >
+                    {t.addUrl}
                   </TouchButton>
-                  <TouchButton variant="warning" size="sm">
-                    <Download size={16} />
-                    Export ({selectedUrls.length})
-                  </TouchButton>
-                  <TouchButton variant="danger" size="sm">
-                    <Trash2 size={16} />
-                    Delete ({selectedUrls.length})
+                </div>
+
+                {/* Action buttons with Thai styling */}
+                {selectedUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <TouchButton variant="success" size="sm">
+                      <Share2 size={16} />
+                      {t.share} ({selectedUrls.length})
+                    </TouchButton>
+                    <TouchButton variant="warning" size="sm">
+                      <Download size={16} />
+                      {t.export} ({selectedUrls.length})
+                    </TouchButton>
+                    <TouchButton variant="danger" size="sm">
+                      <Trash2 size={16} />
+                      {t.delete} ({selectedUrls.length})
+                    </TouchButton>
+                  </div>
+                )}
+              </div>
+
+              {/* Toggle All URLs with Thai styling */}
+              {urls.length > 0 && user && (
+                <div className="flex justify-center mb-6">
+                  <TouchButton
+                    onClick={toggleAllUrls}
+                    variant={isThaiMode ? "thai" : "purple"}
+                    size="md"
+                    className="px-6"
+                  >
+                    {allUrlsHidden ? (
+                      <>
+                        <Eye size={18} />
+                        {t.showAllUrls}
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff size={18} />
+                        {t.hideAllUrls}
+                      </>
+                    )}
                   </TouchButton>
                 </div>
               )}
-            </div>
 
-            {/* Toggle All URLs */}
-            {urls.length > 0 && user && (
-              <div className="flex justify-center mb-6">
-                <TouchButton
-                  onClick={toggleAllUrls}
-                  variant="purple"
-                  size="md"
-                  className="px-6"
-                >
-                  {allUrlsHidden ? (
-                    <>
-                      <Eye size={18} />
-                      Show All URLs
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff size={18} />
-                      Hide All URLs
-                    </>
+              {/* Categories with Thai styling */}
+              <div className="space-y-4">
+                {categories.map(category => {
+                  const categoryUrls = urlsByCategory[category] || [];
+                  const isExpanded = expandedCategories[category] && !allUrlsHidden;
+                  const selectedInCategory = categoryUrls.filter(url => selectedUrls.includes(url.id)).length;
+                  
+                  if (categoryUrls.length === 0 && searchTerm) return null;
+                  
+                  return (
+                    <CategoryCard
+                      key={category}
+                      category={category}
+                      urlCount={categoryUrls.length}
+                      selectedCount={selectedInCategory}
+                      isExpanded={isExpanded}
+                      onToggle={(e) => toggleCategory(category, e)}
+                      onSelectAll={() => selectAllInCategory(category)}
+                      t={t}
+                      isThaiMode={isThaiMode}
+                    >
+                      {categoryUrls.map(url => (
+                        <URLItem
+                          key={url.id}
+                          url={url}
+                          isSelected={selectedUrls.includes(url.id)}
+                          onSelect={() => toggleSelectUrl(url.id)}
+                          onQRCode={() => openQRModal(url.url)}
+                          onSwipeDelete={() => {
+                            console.log('Swipe delete:', url.id);
+                          }}
+                          isThaiMode={isThaiMode}
+                        />
+                      ))}
+                      {categoryUrls.length === 0 && (
+                        <div className={`
+                          p-6 text-center
+                          ${isThaiMode ? 'text-orange-500 font-thai' : 'text-gray-500'}
+                        `}>
+                          {t.noUrlsInCategory}
+                        </div>
+                      )}
+                    </CategoryCard>
+                  );
+                })}
+              </div>
+
+              {/* Empty state with Thai styling */}
+              {urls.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🔗</div>
+                  <h3 className={`
+                    text-xl font-semibold mb-2
+                    ${isThaiMode ? 'text-orange-700 font-thai' : 'text-gray-700'}
+                  `}>
+                    {t.noUrlsYet}
+                  </h3>
+                  <p className={`
+                    mb-6
+                    ${isThaiMode ? 'text-orange-500 font-thai' : 'text-gray-500'}
+                  `}>
+                    {t.noUrlsMessage}
+                  </p>
+                  {user && (
+                    <TouchButton
+                      onClick={() => {
+                        setInputUrl('https://example.com');
+                        setTimeout(() => document.querySelector('input[type="text"]').focus(), 100);
+                      }}
+                      variant={isThaiMode ? "thai" : "primary"}
+                      size="lg"
+                    >
+                      <Plus size={20} />
+                      {t.addFirstUrl}
+                    </TouchButton>
                   )}
-                </TouchButton>
-              </div>
-            )}
-
-            {/* Categories */}
-            <div className="space-y-4">
-              {categories.map(category => {
-                const categoryUrls = urlsByCategory[category] || [];
-                const isExpanded = expandedCategories[category] && !allUrlsHidden;
-                const selectedInCategory = categoryUrls.filter(url => selectedUrls.includes(url.id)).length;
-                
-                if (categoryUrls.length === 0 && searchTerm) return null;
-                
-                return (
-                  <CategoryCard
-                    key={category}
-                    category={category}
-                    urlCount={categoryUrls.length}
-                    selectedCount={selectedInCategory}
-                    isExpanded={isExpanded}
-                    onToggle={(e) => toggleCategory(category, e)}
-                    onSelectAll={() => selectAllInCategory(category)}
-                  >
-                    {categoryUrls.map(url => (
-                      <URLItem
-                        key={url.id}
-                        url={url}
-                        isSelected={selectedUrls.includes(url.id)}
-                        onSelect={() => toggleSelectUrl(url.id)}
-                        onQRCode={() => openQRModal(url.url)}
-                        onSwipeDelete={() => {
-                          // Handle swipe to delete
-                          console.log('Swipe delete:', url.id);
-                        }}
-                      />
-                    ))}
-                    {categoryUrls.length === 0 && (
-                      <div className="p-6 text-gray-500 text-center">
-                        No URLs in this category
-                      </div>
-                    )}
-                  </CategoryCard>
-                );
-              })}
+                </div>
+              )}
             </div>
-
-            {/* Empty state */}
-            {urls.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🔗</div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No URLs added yet</h3>
-                <p className="text-gray-500 mb-6">Add some URLs to get started!</p>
-                {user && (
-                  <TouchButton
-                    onClick={() => {
-                      setInputUrl('https://example.com');
-                      setTimeout(() => document.querySelector('input[type="text"]').focus(), 100);
-                    }}
-                    variant="primary"
-                    size="lg"
-                  >
-                    <Plus size={20} />
-                    Add Your First URL
-                  </TouchButton>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* Floating Action Button with Thai styling */}
+          <FloatingActionButton
+            visible={showFAB && user}
+            onClick={() => {
+              document.querySelector('input[type="text"]').focus();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            isThaiMode={isThaiMode}
+          />
+
+          {/* Modals with Thai support */}
+          {showCategorySelectionModal && (
+            <CategorySelectionModal
+              onClose={() => setShowCategorySelectionModal(false)}
+              onConfirm={addUrl}
+              categories={categories}
+              url={pendingUrl}
+              t={t}
+              isThaiMode={isThaiMode}
+            />
+          )}
+          
+          {showAuthModal && (
+            <AuthModal
+              onClose={() => setShowAuthModal(false)}
+              onLogin={handleLogin}
+              mandatory={!user}
+              t={t}
+              isThaiMode={isThaiMode}
+            />
+          )}
+          
+          {showQRModal && (
+            <QRModal
+              url={showQRModal}
+              onClose={() => setShowQRModal(null)}
+              t={t}
+              isThaiMode={isThaiMode}
+            />
+          )}
         </div>
-
-        {/* Floating Action Button */}
-        <FloatingActionButton
-          visible={showFAB && user}
-          onClick={() => {
-            document.querySelector('input[type="text"]').focus();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-        />
-
-        {/* Modals */}
-        {showCategorySelectionModal && (
-          <CategorySelectionModal
-            onClose={() => setShowCategorySelectionModal(false)}
-            onConfirm={addUrl}
-            categories={categories}
-            url={pendingUrl}
-          />
-        )}
-        
-        {showAuthModal && (
-          <AuthModal
-            onClose={() => setShowAuthModal(false)}
-            onLogin={handleLogin}
-            mandatory={!user}
-          />
-        )}
-        
-        {showQRModal && (
-          <QRModal
-            url={showQRModal}
-            onClose={() => setShowQRModal(null)}
-          />
-        )}
-      </div>
-    </PullToRefresh>
+      </PullToRefresh>
+    </>
   );
 }
 
