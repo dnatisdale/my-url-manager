@@ -1,0 +1,6 @@
+# Redirect all routes to index.html for React Router
+/*    /index.html   200
+
+# PWA redirects
+/manifest.json   /manifest.json   200
+/service-worker.js   /service-worker.js   200

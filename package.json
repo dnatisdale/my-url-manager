@@ -1,6 +1,6 @@
 {
-  "name": "my-url-manager",
-  "version": "0.1.0",
+  "name": "thai-good-news-url-vault",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -17,7 +17,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "serve": "npm run build && npx serve -s build"
   },
   "eslintConfig": {
     "extends": [
