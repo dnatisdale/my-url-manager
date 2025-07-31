@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff, Plus, Sparkles, Globe, Moon, Sun, Palette } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Download, Share2, Trash2, Settings, QrCode, ChevronDown, ChevronUp, Upload, X, LogIn, LogOut, User, Eye, EyeOff, Plus, Sparkles, Globe, Moon, Sun, Palette, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle, Clock, Edit3, Copy, ExternalLink, Zap, Image, Link } from 'lucide-react';
 
-// Thai translations object (keeping from Chapter 2)
+// Thai translations object (keeping from previous chapters)
 const translations = {
   th: {
     appTitle: "ข่าวดี: คลังเก็บลิงก์",
@@ -73,7 +73,40 @@ const translations = {
     more: "เพิ่มเติม",
     darkMode: "โหมดมืด",
     lightMode: "โหมดสว่าง",
-    themeMode: "โหมดธีม"
+    themeMode: "โหมดธีม",
+    // Chapter 4 new translations
+    filters: "ตัวกรอง",
+    sortBy: "เรียงตาม",
+    status: "สถานะ",
+    dateAdded: "วันที่เพิ่ม",
+    urlStatus: "สถานะลิงก์",
+    working: "ใช้งานได้",
+    broken: "เสียหาย",
+    pending: "รอตรวจสอบ",
+    duplicate: "ซ้ำ",
+    checkUrls: "ตรวจสอบลิงก์",
+    checkingUrls: "กำลังตรวจสอบลิงก์...",
+    bulkEdit: "แก้ไขหลายรายการ",
+    duplicates: "รายการซ้ำ",
+    foundDuplicates: "พบรายการซ้ำ",
+    noDuplicates: "ไม่พบรายการซ้ำ",
+    removeDuplicates: "ลบรายการซ้ำ",
+    urlPreview: "ดูตัวอย่างลิงก์",
+    loadingPreview: "กำลังโหลดตัวอย่าง...",
+    errorLoading: "เกิดข้อผิดพลาดในการโหลด",
+    validUrl: "ลิงก์ถูกต้อง",
+    invalidUrl: "ลิงก์ไม่ถูกต้อง",
+    validateUrl: "ตรวจสอบลิงก์",
+    copyUrl: "คัดลอกลิงก์",
+    openUrl: "เปิดลิงก์",
+    editUrl: "แก้ไขลิงก์",
+    urlHealth: "สุขภาพลิงก์",
+    lastChecked: "ตรวจสอบล่าสุด",
+    checkNow: "ตรวจสอบตอนนี้",
+    advancedSearch: "ค้นหาขั้นสูง",
+    searchInTitle: "ค้นหาในชื่อ",
+    searchInUrl: "ค้นหาในลิงก์",
+    searchInDescription: "ค้นหาในคำอธิบาย"
   },
   en: {
     appTitle: "Good News: URL Vault",
@@ -145,11 +178,44 @@ const translations = {
     more: "more",
     darkMode: "Dark Mode",
     lightMode: "Light Mode",
-    themeMode: "Theme Mode"
+    themeMode: "Theme Mode",
+    // Chapter 4 new translations
+    filters: "Filters",
+    sortBy: "Sort By",
+    status: "Status",
+    dateAdded: "Date Added",
+    urlStatus: "URL Status",
+    working: "Working",
+    broken: "Broken",
+    pending: "Pending",
+    duplicate: "Duplicate",
+    checkUrls: "Check URLs",
+    checkingUrls: "Checking URLs...",
+    bulkEdit: "Bulk Edit",
+    duplicates: "Duplicates",
+    foundDuplicates: "Found Duplicates",
+    noDuplicates: "No Duplicates Found",
+    removeDuplicates: "Remove Duplicates",
+    urlPreview: "URL Preview",
+    loadingPreview: "Loading preview...",
+    errorLoading: "Error loading",
+    validUrl: "Valid URL",
+    invalidUrl: "Invalid URL",
+    validateUrl: "Validate URL",
+    copyUrl: "Copy URL",
+    openUrl: "Open URL",
+    editUrl: "Edit URL",
+    urlHealth: "URL Health",
+    lastChecked: "Last Checked",
+    checkNow: "Check Now",
+    advancedSearch: "Advanced Search",
+    searchInTitle: "Search in Title",
+    searchInUrl: "Search in URL",
+    searchInDescription: "Search in Description"
   }
 };
 
-// Advanced theme system
+// Advanced theme system (keeping from Chapter 3)
 const themes = {
   light: {
     bg: 'from-blue-50 via-white to-indigo-50',
@@ -197,56 +263,84 @@ const themes = {
   }
 };
 
-// Floating particles background component
-const FloatingParticles = ({ isDark, isThaiMode }) => {
-  const [particles, setParticles] = useState([]);
+// URL validation and metadata extraction utilities
+const urlUtils = {
+  // Basic URL validation
+  isValidUrl: (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  },
 
-  useEffect(() => {
-    const newParticles = Array.from({ length: 15 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 2,
-      speed: Math.random() * 2 + 1,
-      opacity: Math.random() * 0.6 + 0.1
-    }));
-    setParticles(newParticles);
-  }, []);
+  // Extract domain from URL
+  getDomain: (url) => {
+    try {
+      return new URL(url).hostname;
+    } catch (_) {
+      return 'Invalid URL';
+    }
+  },
 
-  const particleColor = isDark 
-    ? (isThaiMode ? 'bg-yellow-400/20' : 'bg-purple-400/20')
-    : (isThaiMode ? 'bg-orange-400/30' : 'bg-blue-400/30');
+  // Generate favicon URL
+  getFaviconUrl: (url) => {
+    try {
+      const domain = new URL(url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    } catch (_) {
+      return null;
+    }
+  },
 
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {particles.map(particle => (
-        <div
-          key={particle.id}
-          className={`absolute rounded-full ${particleColor} animate-pulse`}
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            opacity: particle.opacity,
-            animation: `float-${particle.id} ${particle.speed * 10}s infinite linear`
-          }}
-        />
-      ))}
-      <style jsx>{`
-        ${particles.map(particle => `
-          @keyframes float-${particle.id} {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-            100% { transform: translateY(0px) rotate(360deg); }
-          }
-        `).join('')}
-      `}</style>
-    </div>
-  );
+  // Simulate URL health check
+  checkUrlHealth: async (url) => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
+    
+    // Simulate different response statuses
+    const outcomes = ['working', 'broken', 'working', 'working', 'broken'];
+    const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    
+    return {
+      status: randomOutcome,
+      responseTime: Math.floor(Math.random() * 1000 + 100),
+      lastChecked: new Date().toISOString()
+    };
+  },
+
+  // Extract URL metadata (simulated)
+  extractMetadata: async (url) => {
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 1500 + 300));
+    
+    const domain = urlUtils.getDomain(url);
+    const titles = [
+      `${domain} - Home Page`,
+      `Welcome to ${domain}`,
+      `${domain} | Official Website`,
+      `About ${domain}`,
+      `${domain} - News & Updates`
+    ];
+    
+    const descriptions = [
+      `Official website of ${domain} with latest updates and information.`,
+      `Discover more about ${domain} and explore our content.`,
+      `${domain} provides quality content and services.`,
+      `Learn more about what ${domain} has to offer.`,
+      `Stay connected with ${domain} for the latest news.`
+    ];
+    
+    return {
+      title: titles[Math.floor(Math.random() * titles.length)],
+      description: descriptions[Math.floor(Math.random() * descriptions.length)],
+      domain: domain,
+      favicon: urlUtils.getFaviconUrl(url)
+    };
+  }
 };
 
-// Enhanced Loading Component with glow effects
+// Advanced components
 const LoadingSpinner = ({ size = 'sm', isDark }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
@@ -263,15 +357,10 @@ const LoadingSpinner = ({ size = 'sm', isDark }) => {
           : 'border-blue-300 border-t-blue-500 shadow-lg shadow-blue-500/30'
         }
       `}></div>
-      <div className={`
-        absolute inset-0 rounded-full animate-pulse
-        ${isDark ? 'bg-purple-500/20' : 'bg-blue-500/20'}
-      `}></div>
     </div>
   );
 };
 
-// Ultra-enhanced button with glassmorphism and 3D effects
 const TouchButton = ({ 
   children, 
   onClick, 
@@ -332,12 +421,6 @@ const TouchButton = ({
         return `${baseStyles} bg-gradient-to-r from-purple-500/80 to-violet-600/80 hover:from-purple-600/90 hover:to-violet-700/90 text-white border border-purple-400/30 shadow-purple-500/30`;
       case 'indigo':
         return `${baseStyles} bg-gradient-to-r from-indigo-500/80 to-blue-600/80 hover:from-indigo-600/90 hover:to-blue-700/90 text-white border border-indigo-400/30 shadow-indigo-500/30`;
-      case 'thai':
-        return `${baseStyles} ${
-          isDark
-            ? 'bg-gradient-to-r from-yellow-400/80 to-orange-500/80 hover:from-yellow-500/90 hover:to-orange-600/90 text-orange-900 border border-yellow-400/30 shadow-yellow-500/30'
-            : 'bg-gradient-to-r from-yellow-500/90 to-orange-600/90 hover:from-yellow-600/95 hover:to-orange-700/95 text-white border border-yellow-400/30 shadow-orange-500/30'
-        }`;
       default:
         return baseStyles;
     }
@@ -360,12 +443,6 @@ const TouchButton = ({
       `}
       {...props}
     >
-      {/* Shimmer effect */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-      </div>
-      
-      {/* Content */}
       <div className="relative flex items-center justify-center gap-2">
         {loading ? <LoadingSpinner size="sm" isDark={isDark} /> : children}
       </div>
@@ -373,215 +450,264 @@ const TouchButton = ({
   );
 };
 
-// Theme Toggle Component with smooth animations
-const ThemeToggle = ({ theme, onToggle, t }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const handleToggle = () => {
-    setIsAnimating(true);
-    onToggle();
-    setTimeout(() => setIsAnimating(false), 300);
-  };
-
-  const isDark = theme === 'dark' || theme === 'thaiDark';
-  
-  return (
-    <TouchButton
-      onClick={handleToggle}
-      variant="secondary"
-      size="sm"
-      className={`
-        relative overflow-hidden
-        ${isDark ? 'bg-gray-800/60' : 'bg-white/60'}
-        ${isAnimating ? 'animate-pulse' : ''}
-      `}
-      isDark={isDark}
-    >
-      <div className="flex items-center gap-2">
-        <div className={`
-          transition-transform duration-300 
-          ${isDark ? 'rotate-180 scale-110' : 'rotate-0 scale-100'}
-        `}>
-          {isDark ? <Moon size={16} /> : <Sun size={16} />}
-        </div>
-        <span className="font-medium text-xs">
-          {isDark ? t.darkMode : t.lightMode}
-        </span>
-      </div>
-      
-      {/* Animated background */}
-      <div className={`
-        absolute inset-0 transition-all duration-500
-        ${isDark 
-          ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20' 
-          : 'bg-gradient-to-r from-yellow-400/20 to-orange-400/20'
-        }
-        ${isAnimating ? 'animate-pulse' : ''}
-      `}></div>
-    </TouchButton>
-  );
-};
-
-// Language Toggle with enhanced effects
-const LanguageToggle = ({ currentLang, onToggle, isDark }) => {
-  return (
-    <TouchButton
-      onClick={onToggle}
-      variant="secondary"
-      size="sm"
-      className="relative overflow-hidden"
-      isDark={isDark}
-    >
-      <Globe size={16} className="animate-pulse" />
-      <span className="font-bold">
-        {currentLang === 'th' ? 'ไทย' : 'EN'}
-      </span>
-      
-      {/* Rotating globe effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-green-500/10 to-blue-500/10 animate-pulse"></div>
-    </TouchButton>
-  );
-};
-
-// Ultra-enhanced Category Card with advanced glassmorphism
-const CategoryCard = ({ 
-  category, 
-  urlCount, 
-  isExpanded, 
-  onToggle, 
-  onSelectAll, 
-  children,
-  selectedCount = 0,
-  t,
-  theme,
-  isDark,
-  isThaiMode
+// Advanced Search & Filter Component
+const AdvancedFilters = ({ 
+  searchTerm, 
+  setSearchTerm, 
+  filters, 
+  setFilters, 
+  onCheckUrls, 
+  isCheckingUrls,
+  t, 
+  isDark, 
+  isThaiMode,
+  themeConfig 
 }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const themeConfig = themes[theme];
-
-  const handleToggle = (e) => {
-    setIsAnimating(true);
-    onToggle(e);
-    setTimeout(() => setIsAnimating(false), 300);
-  };
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div 
-      className={`
-        ${themeConfig.cardBg} rounded-3xl shadow-2xl transition-all duration-500 overflow-hidden 
-        border ${themeConfig.cardBorder} ${themeConfig.shadowColor}
-        hover:shadow-3xl hover:scale-[1.02] transform-gpu
-        ${isHovered ? 'shadow-3xl' : ''}
-      `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        className={`
-          p-6 cursor-pointer transition-all duration-300 relative overflow-hidden
-          ${isDark 
-            ? 'bg-gradient-to-r from-gray-800/30 to-gray-700/30 hover:from-gray-700/40 hover:to-gray-600/40' 
-            : isThaiMode 
-            ? 'bg-gradient-to-r from-yellow-50/50 to-orange-50/50 hover:from-yellow-100/60 hover:to-orange-100/60'
-            : 'bg-gradient-to-r from-blue-50/50 to-indigo-50/50 hover:from-blue-100/60 hover:to-indigo-100/60'
-          }
-        `}
-        onClick={handleToggle}
-      >
-        {/* Animated background effect */}
-        <div className={`
-          absolute inset-0 opacity-0 transition-opacity duration-300
-          ${isHovered ? 'opacity-100' : ''}
-          ${isDark 
-            ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10' 
-            : 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10'
-          }
-        `}></div>
-        
-        <div className="flex justify-between items-center relative z-10">
-          <div className="flex items-center gap-4">
-            <div className={`
-              w-4 h-4 rounded-full flex-shrink-0 animate-pulse shadow-lg
-              ${isDark 
-                ? isThaiMode ? 'bg-gradient-to-r from-yellow-400 to-orange-500 shadow-yellow-500/50' : 'bg-gradient-to-r from-purple-400 to-pink-500 shadow-purple-500/50'
-                : isThaiMode ? 'bg-gradient-to-r from-yellow-500 to-orange-600 shadow-orange-500/50' : 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-blue-500/50'
-              }
-            `}></div>
-            <div className={isThaiMode ? 'font-thai' : ''}>
-              <span className={`font-bold text-xl ${themeConfig.text}`}>{category}</span>
-              <div className={`text-sm ${themeConfig.textSecondary} flex gap-3 mt-1`}>
-                <span className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-purple-400' : 'bg-blue-400'} animate-pulse`}></div>
-                  {urlCount} {t.urls}
-                </span>
-                {selectedCount > 0 && (
-                  <span className={`font-semibold flex items-center gap-1 ${isDark ? 'text-purple-300' : 'text-blue-600'}`}>
-                    <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-pink-400' : 'bg-green-400'} animate-pulse`}></div>
-                    {selectedCount} {t.selected}
-                  </span>
-                )}
-              </div>
+    <div className={`
+      ${themeConfig.cardBg} rounded-2xl shadow-xl p-6 mb-6 border glass
+      ${themeConfig.cardBorder} ${themeConfig.shadowColor}
+    `}>
+      {/* Basic Search */}
+      <div className="relative mb-4">
+        <Search className={`
+          absolute left-4 top-1/2 transform -translate-y-1/2 animate-pulse
+          ${isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-400' : 'text-blue-400'}
+        `} size={20} />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder={t.searchPlaceholder}
+          className={`
+            w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
+            transition-all duration-300 glass font-medium backdrop-blur-xl
+            ${isDark 
+              ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
+              : isThaiMode 
+              ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
+              : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
+            }
+          `}
+        />
+      </div>
+
+      {/* Filter Toggle */}
+      <div className="flex justify-between items-center mb-4">
+        <TouchButton
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          variant="secondary"
+          size="sm"
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <Filter size={16} />
+          {t.advancedSearch}
+          <ChevronDown size={16} className={`transition-transform duration-300 ${showAdvanced ? 'rotate-180' : ''}`} />
+        </TouchButton>
+
+        <TouchButton
+          onClick={onCheckUrls}
+          variant="primary"
+          size="sm"
+          loading={isCheckingUrls}
+          isDark={isDark}
+          isThaiMode={isThaiMode}
+        >
+          <RefreshCw size={16} />
+          {t.checkUrls}
+        </TouchButton>
+      </div>
+
+      {/* Advanced Filters */}
+      {showAdvanced && (
+        <div className="border-t pt-4 space-y-4">
+          {/* Sort By */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
+              {t.sortBy}
+            </label>
+            <select
+              value={filters.sortBy}
+              onChange={e => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+              className={`
+                w-full p-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
+                ${isDark 
+                  ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
+                  : isThaiMode 
+                  ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
+                  : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
+                }
+              `}
+            >
+              <option value="dateAdded">{t.dateAdded}</option>
+              <option value="alphabetical">Alphabetical</option>
+              <option value="domain">Domain</option>
+              <option value="status">{t.status}</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
+              {t.urlStatus}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {['all', 'working', 'broken', 'pending'].map(status => (
+                <TouchButton
+                  key={status}
+                  onClick={() => setFilters(prev => ({ ...prev, status }))}
+                  variant={filters.status === status ? 'primary' : 'secondary'}
+                  size="sm"
+                  isDark={isDark}
+                  isThaiMode={isThaiMode}
+                >
+                  {status === 'all' ? 'All' : t[status]}
+                </TouchButton>
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {urlCount > 0 && (
-              <TouchButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectAll();
-                }}
-                variant={isDark ? "purple" : isThaiMode ? "thai" : "primary"}
-                size="sm"
-                className="text-xs font-bold"
-                isDark={isDark}
-                isThaiMode={isThaiMode}
-              >
-                {selectedCount === urlCount ? t.deselectAll : t.selectAll}
-              </TouchButton>
-            )}
-            <div className={`
-              p-3 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-sm
-              ${isDark ? 'bg-gray-700/60 shadow-purple-500/20' : 'bg-white/80 shadow-blue-500/20'}
-              ${isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'}
-              ${isHovered ? 'scale-110 shadow-xl' : ''}
-            `}>
-              <ChevronDown size={20} className={`${themeConfig.textSecondary} transition-colors duration-300`} />
+
+          {/* Search Options */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${themeConfig.text}`}>
+              Search In
+            </label>
+            <div className="space-y-2">
+              {[
+                { key: 'searchInUrl', label: t.searchInUrl },
+                { key: 'searchInTitle', label: t.searchInTitle },
+                { key: 'searchInDescription', label: t.searchInDescription }
+              ].map(option => (
+                <label key={option.key} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={filters[option.key]}
+                    onChange={e => setFilters(prev => ({ ...prev, [option.key]: e.target.checked }))}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className={`${themeConfig.textSecondary} text-sm`}>{option.label}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+// URL Preview Component
+const URLPreview = ({ url, isDark, isThaiMode, themeConfig }) => {
+  const [metadata, setMetadata] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const loadMetadata = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        const data = await urlUtils.extractMetadata(url.url);
+        setMetadata(data);
+      } catch (err) {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMetadata();
+  }, [url.url]);
+
+  if (loading) {
+    return (
+      <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} flex items-center gap-3`}>
+        <LoadingSpinner size="sm" isDark={isDark} />
+        <span className={`text-sm ${themeConfig.textSecondary}`}>Loading preview...</span>
       </div>
-      
-      {/* Smooth expand/collapse with enhanced animation */}
-      <div className={`
-        transition-all duration-500 ease-out overflow-hidden
-        ${isExpanded ? 'max-h-screen opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-4'}
-      `}>
-        <div className={`border-t ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
-          {children}
+    );
+  }
+
+  if (error || !metadata) {
+    return (
+      <div className={`p-4 rounded-xl ${isDark ? 'bg-red-900/20' : 'bg-red-50/60'} flex items-center gap-3`}>
+        <AlertTriangle size={16} className="text-red-500" />
+        <span className={`text-sm ${themeConfig.textSecondary}`}>Error loading preview</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-gray-50/60'} space-y-3`}>
+      <div className="flex items-start gap-3">
+        {metadata.favicon && (
+          <img 
+            src={metadata.favicon} 
+            alt="Favicon" 
+            className="w-6 h-6 rounded flex-shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <h4 className={`font-medium ${themeConfig.text} truncate`}>
+            {metadata.title}
+          </h4>
+          <p className={`text-sm ${themeConfig.textSecondary} line-clamp-2 mt-1`}>
+            {metadata.description}
+          </p>
+          <p className={`text-xs ${themeConfig.textSecondary} mt-2 opacity-75`}>
+            {metadata.domain}
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-// Enhanced URL Item with advanced hover effects
+// URL Status Indicator
+const URLStatusIndicator = ({ status, lastChecked, isDark }) => {
+  const statusConfig = {
+    working: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/20' },
+    broken: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/20' },
+    pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/20' }
+  };
+
+  const config = statusConfig[status] || statusConfig.pending;
+  const Icon = config.icon;
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${config.bg}`}>
+      <Icon size={14} className={config.color} />
+      <span className={`text-xs font-medium ${config.color}`}>
+        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Pending'}
+      </span>
+    </div>
+  );
+};
+
+// Enhanced URL Item with advanced features
 const URLItem = ({ 
   url, 
   isSelected, 
   onSelect, 
   onQRCode,
   onSwipeDelete,
+  onEdit,
+  onCheckHealth,
   theme,
   isDark,
-  isThaiMode
+  isThaiMode,
+  t,
+  showPreview = true
 }) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   const themeConfig = themes[theme];
 
@@ -605,6 +731,17 @@ const URLItem = ({
     setSwipeOffset(0);
   };
 
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(url.url);
+      if (navigator.vibrate) {
+        navigator.vibrate([50, 30, 50]);
+      }
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
+
   return (
     <div 
       className="relative overflow-hidden group"
@@ -624,11 +761,10 @@ const URLItem = ({
         <Trash2 size={20} className="text-white animate-pulse" />
       </div>
       
-      {/* Main content with advanced effects */}
+      {/* Main content */}
       <div 
         className={`
-          p-5 border-b last:border-b-0 flex items-center gap-5
-          transition-all duration-300 relative overflow-hidden
+          p-5 border-b last:border-b-0 transition-all duration-300 relative overflow-hidden
           ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
           ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}
           ${isDark 
@@ -644,228 +780,379 @@ const URLItem = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Animated background glow */}
-        <div className={`
-          absolute inset-0 opacity-0 transition-opacity duration-300
-          ${isHovered ? 'opacity-100' : ''}
-          ${isDark 
-            ? 'bg-gradient-to-r from-purple-500/5 to-pink-500/5' 
-            : 'bg-gradient-to-r from-blue-500/5 to-indigo-500/5'
-          }
-        `}></div>
-        
-        {/* Enhanced checkbox with glow */}
-        <div className="relative flex-shrink-0 z-10">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={onSelect}
-            className={`
-              w-7 h-7 rounded-xl transition-all duration-300
-              ${isDark ? 'accent-purple-500' : isThaiMode ? 'accent-orange-500' : 'accent-blue-500'}
-              hover:scale-110 transform-gpu
-            `}
-          />
-          {isSelected && (
-            <div className="absolute inset-0 pointer-events-none">
-              <div className={`
-                w-7 h-7 rounded-xl flex items-center justify-center animate-pulse
-                ${isDark 
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 shadow-lg shadow-purple-500/50' 
-                  : isThaiMode 
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-600 shadow-lg shadow-orange-500/50'
-                  : 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/50'
-                }
-              `}>
-                <div className="w-4 h-4 border-2 border-white rounded-sm"></div>
-              </div>
+        {/* Top row - checkbox, URL, actions */}
+        <div className="flex items-start gap-4 mb-3">
+          {/* Enhanced checkbox */}
+          <div className="relative flex-shrink-0 z-10 mt-1">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onSelect}
+              className={`
+                w-6 h-6 rounded-lg transition-all duration-300
+                ${isDark ? 'accent-purple-500' : isThaiMode ? 'accent-orange-500' : 'accent-blue-500'}
+                hover:scale-110 transform-gpu
+              `}
+            />
+          </div>
+          
+          {/* URL content with metadata */}
+          <div className="flex-1 min-w-0 z-10 space-y-2">
+            {/* URL and favicon */}
+            <div className="flex items-center gap-3">
+              <img 
+                src={urlUtils.getFaviconUrl(url.url)} 
+                alt="Favicon" 
+                className="w-5 h-5 rounded flex-shrink-0"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <a
+                href={url.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`
+                  break-all transition-all duration-300 font-medium hover:underline
+                  ${isDark 
+                    ? 'text-gray-200 hover:text-purple-300' 
+                    : isThaiMode 
+                    ? 'text-orange-800 hover:text-orange-600'
+                    : 'text-gray-800 hover:text-blue-600'
+                  }
+                `}
+              >
+                {url.title || urlUtils.getDomain(url.url)}
+              </a>
+            </div>
+
+            {/* URL domain */}
+            <div className={`text-sm ${themeConfig.textSecondary} flex items-center gap-2`}>
+              <span>{url.url}</span>
+              {url.status && <URLStatusIndicator status={url.status} isDark={isDark} />}
+            </div>
+
+            {/* URL Preview */}
+            {showPreview && isHovered && (
+              <URLPreview 
+                url={url} 
+                isDark={isDark} 
+                isThaiMode={isThaiMode} 
+                themeConfig={themeConfig} 
+              />
+            )}
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 z-10">
+            <TouchButton
+              onClick={copyToClipboard}
+              variant="secondary"
+              size="sm"
+              className="p-2"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <Copy size={16} />
+            </TouchButton>
+
+            <TouchButton
+              onClick={() => window.open(url.url, '_blank')}
+              variant="secondary"
+              size="sm"
+              className="p-2"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <ExternalLink size={16} />
+            </TouchButton>
+
+            <TouchButton
+              onClick={onQRCode}
+              variant="secondary"
+              size="sm"
+              className="p-2"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <QrCode size={16} />
+            </TouchButton>
+
+            <TouchButton
+              onClick={() => setShowActions(!showActions)}
+              variant="secondary"
+              size="sm"
+              className="p-2"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <ChevronDown size={16} className={`transition-transform duration-300 ${showActions ? 'rotate-180' : ''}`} />
+            </TouchButton>
+          </div>
+        </div>
+
+        {/* Expandable actions */}
+        {showActions && (
+          <div className="border-t pt-3 flex flex-wrap gap-2">
+            <TouchButton
+              onClick={onEdit}
+              variant="secondary"
+              size="sm"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <Edit3 size={14} />
+              {t.editUrl}
+            </TouchButton>
+
+            <TouchButton
+              onClick={() => onCheckHealth(url.id)}
+              variant="secondary"
+              size="sm"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              <Zap size={14} />
+              {t.checkNow}
+            </TouchButton>
+
+            {url.lastChecked && (
+              <span className={`text-xs ${themeConfig.textSecondary} flex items-center gap-1 px-3 py-2`}>
+                <Clock size={12} />
+                {t.lastChecked}: {new Date(url.lastChecked).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Bulk Edit Modal
+const BulkEditModal = ({ 
+  selectedUrls, 
+  onClose, 
+  onBulkAction, 
+  categories, 
+  t, 
+  isDark, 
+  isThaiMode,
+  themeConfig 
+}) => {
+  const [bulkAction, setBulkAction] = useState('move');
+  const [targetCategory, setTargetCategory] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleBulkAction = async () => {
+    setIsProcessing(true);
+    await onBulkAction(bulkAction, targetCategory);
+    setIsProcessing(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className={`text-2xl font-bold ${themeConfig.text}`}>
+            {t.bulkEdit} ({selectedUrls.length})
+          </h3>
+          <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-3" isDark={isDark}>
+            <X size={20} />
+          </TouchButton>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className={`block text-sm font-medium mb-3 ${themeConfig.text}`}>
+              Action
+            </label>
+            <div className="space-y-2">
+              {[
+                { value: 'move', label: 'Move to Category' },
+                { value: 'delete', label: 'Delete URLs' },
+                { value: 'check', label: 'Check URL Health' },
+                { value: 'export', label: 'Export URLs' }
+              ].map(action => (
+                <label key={action.value} className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="bulkAction"
+                    value={action.value}
+                    checked={bulkAction === action.value}
+                    onChange={e => setBulkAction(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className={themeConfig.textSecondary}>{action.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {bulkAction === 'move' && (
+            <div>
+              <label className={`block text-sm font-medium mb-3 ${themeConfig.text}`}>
+                Target Category
+              </label>
+              <select
+                value={targetCategory}
+                onChange={e => setTargetCategory(e.target.value)}
+                className={`
+                  w-full p-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
+                  ${isDark 
+                    ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
+                    : isThaiMode 
+                    ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
+                    : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
+                  }
+                `}
+              >
+                <option value="">Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
           )}
+
+          <div className="flex gap-3">
+            <TouchButton
+              onClick={onClose}
+              variant="secondary"
+              size="md"
+              className="flex-1"
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              {t.cancel}
+            </TouchButton>
+            <TouchButton
+              onClick={handleBulkAction}
+              variant="primary"
+              size="md"
+              className="flex-1"
+              loading={isProcessing}
+              disabled={bulkAction === 'move' && !targetCategory}
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+            >
+              {t.confirm}
+            </TouchButton>
+          </div>
         </div>
-        
-        {/* URL content with enhanced typography */}
-        <div className="flex-1 min-w-0 z-10">
-          <a
-            href={url.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`
-              block break-all transition-all duration-300 font-medium
-              ${isDark 
-                ? 'text-gray-200 hover:text-purple-300' 
-                : isThaiMode 
-                ? 'text-orange-800 hover:text-orange-600 font-thai'
-                : 'text-gray-800 hover:text-blue-600'
-              }
-              hover:scale-[1.02] transform-gpu
-            `}
-          >
-            <span className={`text-sm opacity-60`}>https://</span>
-            <span className="font-semibold tracking-wide">{url.url.replace(/^https?:\/\//, '')}</span>
-          </a>
-        </div>
-        
-        {/* Enhanced QR Code button */}
+      </div>
+    </div>
+  );
+};
+
+// Duplicate Detection Component
+const DuplicateManager = ({ urls, onRemoveDuplicates, t, isDark, isThaiMode, themeConfig }) => {
+  const [duplicates, setDuplicates] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const findDuplicates = useCallback(() => {
+    const urlMap = new Map();
+    const duplicateGroups = [];
+
+    urls.forEach(url => {
+      const normalizedUrl = url.url.toLowerCase().replace(/\/$/, '');
+      if (urlMap.has(normalizedUrl)) {
+        urlMap.get(normalizedUrl).push(url);
+      } else {
+        urlMap.set(normalizedUrl, [url]);
+      }
+    });
+
+    urlMap.forEach(group => {
+      if (group.length > 1) {
+        duplicateGroups.push(group);
+      }
+    });
+
+    setDuplicates(duplicateGroups);
+  }, [urls]);
+
+  useEffect(() => {
+    findDuplicates();
+  }, [findDuplicates]);
+
+  const handleRemoveDuplicates = async () => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing
+    
+    const urlsToKeep = [];
+    const urlsToRemove = [];
+
+    duplicates.forEach(group => {
+      urlsToKeep.push(group[0]); // Keep first occurrence
+      urlsToRemove.push(...group.slice(1)); // Remove duplicates
+    });
+
+    onRemoveDuplicates(urlsToRemove.map(url => url.id));
+    setLoading(false);
+  };
+
+  if (duplicates.length === 0) {
+    return (
+      <div className={`${themeConfig.cardBg} rounded-2xl p-6 border ${themeConfig.cardBorder} text-center`}>
+        <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
+        <p className={`${themeConfig.text} font-medium`}>{t.noDuplicates}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${themeConfig.cardBg} rounded-2xl p-6 border ${themeConfig.cardBorder} space-y-4`}>
+      <div className="flex justify-between items-center">
+        <h3 className={`text-xl font-bold ${themeConfig.text}`}>
+          {t.foundDuplicates} ({duplicates.length} groups)
+        </h3>
         <TouchButton
-          onClick={(e) => {
-            e.preventDefault();
-            onQRCode();
-          }}
-          variant="secondary"
+          onClick={handleRemoveDuplicates}
+          variant="warning"
           size="sm"
-          className={`
-            flex-shrink-0 p-4 z-10 group
-            ${isDark ? 'hover:bg-purple-700/30' : isThaiMode ? 'hover:bg-orange-100/80' : 'hover:bg-blue-100/80'}
-          `}
+          loading={loading}
           isDark={isDark}
           isThaiMode={isThaiMode}
         >
-          <QrCode size={20} className="group-hover:scale-110 transition-transform duration-200" />
+          <Trash2 size={16} />
+          {t.removeDuplicates}
         </TouchButton>
       </div>
-    </div>
-  );
-};
 
-// Enhanced Floating Action Button
-const FloatingActionButton = ({ onClick, visible = true, theme, isDark, isThaiMode }) => {
-  const [isPulsing, setIsPulsing] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsPulsing(true);
-      setTimeout(() => setIsPulsing(false), 1000);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className={`
-      fixed bottom-8 right-8 z-50 transition-all duration-500
-      ${visible ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-4'}
-    `}>
-      <TouchButton
-        onClick={onClick}
-        variant="primary"
-        size="lg"
-        className={`
-          w-20 h-20 rounded-full shadow-2xl relative overflow-hidden
-          ${isPulsing ? 'animate-pulse scale-110' : ''}
-          hover:scale-110 transform-gpu
-          ${isDark 
-            ? 'shadow-purple-500/30' 
-            : isThaiMode 
-            ? 'shadow-orange-500/30'
-            : 'shadow-blue-500/30'
-          }
-        `}
-        isDark={isDark}
-        isThaiMode={isThaiMode}
-      >
-        <Plus size={28} className="animate-pulse" />
-        
-        {/* Orbiting elements */}
-        <div className="absolute inset-0">
-          <div className={`
-            absolute w-2 h-2 rounded-full animate-spin
-            ${isDark ? 'bg-purple-300' : isThaiMode ? 'bg-orange-300' : 'bg-blue-300'}
-          `} style={{ 
-            top: '10%', 
-            left: '50%', 
-            transformOrigin: '0 40px',
-            animation: 'spin 4s linear infinite'
-          }}></div>
-        </div>
-      </TouchButton>
-    </div>
-  );
-};
-
-// Enhanced Pull to Refresh
-const PullToRefresh = ({ onRefresh, children, t, theme, isDark }) => {
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [startY, setStartY] = useState(0);
-
-  const handleTouchStart = (e) => {
-    setStartY(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e) => {
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY;
-    if (diff > 0 && window.scrollY === 0) {
-      setPullDistance(Math.min(120, diff));
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (pullDistance > 80) {
-      setIsRefreshing(true);
-      await onRefresh();
-      setIsRefreshing(false);
-    }
-    setPullDistance(0);
-  };
-
-  return (
-    <div 
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="relative"
-    >
-      {/* Enhanced pull indicator */}
-      <div 
-        className={`
-          absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full
-          transition-all duration-300 flex flex-col items-center justify-center
-          font-bold text-sm backdrop-blur-sm rounded-2xl px-6 py-3
-          ${isDark 
-            ? 'text-purple-300 bg-purple-900/60 shadow-lg shadow-purple-500/20' 
-            : 'text-blue-600 bg-blue-100/80 shadow-lg shadow-blue-500/20'
-          }
-        `}
-        style={{ 
-          height: `${pullDistance}px`,
-          opacity: pullDistance > 30 ? 1 : 0 
-        }}
-      >
-        {isRefreshing ? (
-          <>
-            <LoadingSpinner size="md" isDark={isDark} />
-            <span className="mt-2">{t.refreshing}</span>
-          </>
-        ) : (
-          <>
-            <Sparkles size={28} className="animate-pulse" />
-            <span className="mt-2">
-              {pullDistance > 80 ? t.releaseToRefresh : t.pullToRefresh}
-            </span>
-          </>
+      <div className="space-y-3">
+        {duplicates.slice(0, 5).map((group, index) => (
+          <div key={index} className={`p-4 rounded-xl ${isDark ? 'bg-yellow-900/20' : 'bg-yellow-50/60'} border-l-4 border-yellow-500`}>
+            <p className={`font-medium ${themeConfig.text} mb-2`}>
+              Duplicate Group {index + 1} ({group.length} URLs)
+            </p>
+            {group.map((url, urlIndex) => (
+              <div key={url.id} className={`text-sm ${themeConfig.textSecondary} flex items-center gap-2`}>
+                <span className={`w-2 h-2 rounded-full ${urlIndex === 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                <span className={urlIndex === 0 ? 'font-medium' : ''}>{url.url}</span>
+                {urlIndex === 0 && <span className="text-green-600 text-xs">(Keep)</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+        {duplicates.length > 5 && (
+          <p className={`text-sm ${themeConfig.textSecondary} text-center`}>
+            ...and {duplicates.length - 5} more groups
+          </p>
         )}
       </div>
-      
-      <div style={{ transform: `translateY(${pullDistance * 0.5}px)` }}>
-        {children}
-      </div>
     </div>
   );
 };
 
-// Enhanced modals will use similar patterns but I'll focus on the main app structure
-// Main App Component with Visual Enhancement
+// Main App Component with Advanced Features
 function App() {
-  // Theme and visual state
+  // Theme and visual state (from Chapter 3)
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   
-  // App state
+  // Basic app state
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
   const [urls, setUrls] = useState([]);
   const [inputUrl, setInputUrl] = useState('https://');
   const [selectedUrls, setSelectedUrls] = useState([]);
@@ -878,12 +1165,22 @@ function App() {
   ]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [showQRModal, setShowQRModal] = useState(null);
-  const [showCategorySelectionModal, setShowCategorySelectionModal] = useState(false);
-  const [pendingUrl, setPendingUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [allUrlsHidden, setAllUrlsHidden] = useState(false);
   const [showFAB, setShowFAB] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Chapter 4: Advanced features state
+  const [filters, setFilters] = useState({
+    sortBy: 'dateAdded',
+    status: 'all',
+    searchInUrl: true,
+    searchInTitle: true,
+    searchInDescription: false
+  });
+  const [isCheckingUrls, setIsCheckingUrls] = useState(false);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   // Computed values
   const isDark = theme === 'dark' || theme === 'thaiDark';
@@ -892,7 +1189,7 @@ function App() {
   const themeConfig = themes[currentTheme];
   const t = translations[language];
 
-  // Theme toggle handler
+  // Theme and language handlers (from Chapter 3)
   const toggleTheme = () => {
     if (isThaiMode) {
       setTheme(theme === 'thai' ? 'thaiDark' : 'thai');
@@ -901,19 +1198,16 @@ function App() {
     }
   };
 
-  // Language toggle handler
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'th' : 'en';
     setLanguage(newLang);
     
-    // Update theme accordingly
     if (newLang === 'th') {
       setTheme(isDark ? 'thaiDark' : 'thai');
     } else {
       setTheme(isDark ? 'dark' : 'light');
     }
     
-    // Update categories with translated names
     setCategories(prev => prev.map(cat => {
       if (cat === 'No Category' || cat === 'ไม่มีหมวดหมู่') {
         return newLang === 'th' ? 'ไม่มีหมวดหมู่' : 'No Category';
@@ -928,80 +1222,124 @@ function App() {
     }));
   };
 
-  // Scroll handler for FAB visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setShowFAB(false);
-      } else {
-        setShowFAB(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
+  // Chapter 4: Advanced URL functions
+  const checkAllUrls = async () => {
+    setIsCheckingUrls(true);
+    
+    const urlPromises = urls.map(async (url) => {
+      const health = await urlUtils.checkUrlHealth(url.url);
+      return { ...url, ...health };
+    });
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
-  // PWA Install Event Listener
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallButton(true);
-    };
-
-    const handleAppInstalled = () => {
-      setShowInstallButton(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  // Load user data
-  useEffect(() => {
-    const savedUser = localStorage.getItem('urlManagerUser');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-    } else {
-      setShowAuthModal(true);
+    try {
+      const updatedUrls = await Promise.all(urlPromises);
+      setUrls(updatedUrls);
+    } catch (error) {
+      console.error('Error checking URLs:', error);
+    } finally {
+      setIsCheckingUrls(false);
     }
-  }, []);
-
-  // Other handlers (simplified for space)
-  const handleLogin = (email) => {
-    const userData = { email, signedInAt: new Date().toISOString() };
-    setUser(userData);
-    localStorage.setItem('urlManagerUser', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('urlManagerUser');
+  const checkSingleUrl = async (urlId) => {
+    const urlToCheck = urls.find(u => u.id === urlId);
+    if (!urlToCheck) return;
+
+    const health = await urlUtils.checkUrlHealth(urlToCheck.url);
+    setUrls(prev => prev.map(u => 
+      u.id === urlId ? { ...u, ...health } : u
+    ));
+  };
+
+  const handleBulkAction = async (action, targetCategory) => {
+    switch (action) {
+      case 'move':
+        setUrls(prev => prev.map(url => 
+          selectedUrls.includes(url.id) 
+            ? { ...url, category: targetCategory }
+            : url
+        ));
+        break;
+      case 'delete':
+        if (window.confirm(t.deleteConfirm)) {
+          setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
+        }
+        break;
+      case 'check':
+        const selectedUrlObjects = urls.filter(u => selectedUrls.includes(u.id));
+        const healthPromises = selectedUrlObjects.map(async (url) => {
+          const health = await urlUtils.checkUrlHealth(url.url);
+          return { ...url, ...health };
+        });
+        
+        const updatedUrls = await Promise.all(healthPromises);
+        setUrls(prev => prev.map(url => {
+          const updated = updatedUrls.find(u => u.id === url.id);
+          return updated || url;
+        }));
+        break;
+      case 'export':
+        // Export functionality would go here
+        break;
+    }
     setSelectedUrls([]);
   };
 
-  const normalizeUrl = (url) => {
-    let trimmed = url.trim().replaceAll(' ', '');
-    if (!trimmed || trimmed === 'https://') return '';
-    trimmed = trimmed.replace(/^https?:\/\//, '');
-    return trimmed ? `https://${trimmed}` : '';
+  const removeDuplicates = (duplicateIds) => {
+    setUrls(prev => prev.filter(url => !duplicateIds.includes(url.id)));
   };
 
+  // Enhanced filtering and sorting
+  const getFilteredUrls = () => {
+    let filteredUrls = urls;
+
+    // Apply search filter
+    if (searchTerm) {
+      filteredUrls = filteredUrls.filter(url => {
+        const searchLower = searchTerm.toLowerCase();
+        const checks = [];
+        
+        if (filters.searchInUrl) {
+          checks.push(url.url.toLowerCase().includes(searchLower));
+        }
+        if (filters.searchInTitle && url.title) {
+          checks.push(url.title.toLowerCase().includes(searchLower));
+        }
+        if (filters.searchInDescription && url.description) {
+          checks.push(url.description.toLowerCase().includes(searchLower));
+        }
+        
+        return checks.some(Boolean);
+      });
+    }
+
+    // Apply status filter
+    if (filters.status !== 'all') {
+      filteredUrls = filteredUrls.filter(url => url.status === filters.status);
+    }
+
+    // Apply sorting
+    filteredUrls.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'alphabetical':
+          return (a.title || a.url).localeCompare(b.title || b.url);
+        case 'domain':
+          return urlUtils.getDomain(a.url).localeCompare(urlUtils.getDomain(b.url));
+        case 'status':
+          return (a.status || 'pending').localeCompare(b.status || 'pending');
+        case 'dateAdded':
+        default:
+          return new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id);
+      }
+    });
+
+    return filteredUrls;
+  };
+
+  // Basic handlers (simplified from previous chapters)
   const addUrl = (category, isNewCategory = false) => {
-    const normalized = normalizeUrl(pendingUrl);
-    if (normalized && !urls.find(u => u.url === normalized)) {
+    const normalized = inputUrl.trim();
+    if (normalized && urlUtils.isValidUrl(normalized) && !urls.find(u => u.url === normalized)) {
       if (isNewCategory && !categories.includes(category)) {
         setCategories([...categories, category]);
       }
@@ -1009,7 +1347,9 @@ function App() {
       const newUrl = {
         id: Date.now(),
         url: normalized,
-        category: category
+        category: category,
+        dateAdded: new Date().toISOString(),
+        status: 'pending'
       };
       setUrls([...urls, newUrl]);
       
@@ -1019,14 +1359,13 @@ function App() {
       }
     }
     setInputUrl('https://');
-    setPendingUrl('');
   };
 
   const handleUrlSubmit = () => {
-    const normalized = normalizeUrl(inputUrl);
-    if (normalized) {
-      setPendingUrl(normalized);
-      setShowCategorySelectionModal(true);
+    const normalized = inputUrl.trim();
+    if (normalized && urlUtils.isValidUrl(normalized)) {
+      // For demo, just add to first category
+      addUrl(categories[0]);
     }
   };
 
@@ -1036,58 +1375,6 @@ function App() {
         ? selectedUrls.filter(id => id !== urlId)
         : [...selectedUrls, urlId]
     );
-  };
-
-  const selectAllInCategory = (category) => {
-    const categoryUrls = getFilteredUrls().filter(u => u.category === category);
-    const categoryIds = categoryUrls.map(u => u.id);
-    const allSelected = categoryIds.every(id => selectedUrls.includes(id));
-    
-    if (allSelected) {
-      setSelectedUrls(selectedUrls.filter(id => !categoryIds.includes(id)));
-    } else {
-      setSelectedUrls([...new Set([...selectedUrls, ...categoryIds])]);
-    }
-  };
-
-  const toggleCategory = (category, event) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [category]: !prev[category]
-    }));
-  };
-
-  const toggleAllUrls = () => {
-    setAllUrlsHidden(!allUrlsHidden);
-    if (!allUrlsHidden) {
-      setExpandedCategories({});
-    } else {
-      const allExpanded = {};
-      categories.forEach(cat => allExpanded[cat] = true);
-      setExpandedCategories(allExpanded);
-    }
-  };
-
-  const getFilteredUrls = () => {
-    return urls.filter(url => 
-      url.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      url.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-
-  const getUrlsByCategory = () => {
-    const filteredUrls = getFilteredUrls();
-    const grouped = {};
-    
-    categories.forEach(cat => {
-      grouped[cat] = filteredUrls.filter(url => url.category === cat);
-    });
-    
-    return grouped;
-  };
-
-  const handleRefresh = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
   };
 
   const handleKeyPress = (e) => {
@@ -1100,11 +1387,34 @@ function App() {
     setShowQRModal(url);
   };
 
+  // Get URLs by category with advanced filtering
+  const getUrlsByCategory = () => {
+    const filteredUrls = getFilteredUrls();
+    const grouped = {};
+    
+    categories.forEach(cat => {
+      grouped[cat] = filteredUrls.filter(url => url.category === cat);
+    });
+    
+    return grouped;
+  };
+
   const urlsByCategory = getUrlsByCategory();
+
+  // Load user data
+  useEffect(() => {
+    const savedUser = localStorage.getItem('urlManagerUser');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+    } else {
+      setShowAuthModal(true);
+    }
+  }, []);
 
   return (
     <>
-      {/* Enhanced Google Fonts */}
+      {/* Enhanced Google Fonts and Styles */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -1115,6 +1425,13 @@ function App() {
       <style jsx>{`
         .font-thai {
           font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
         
         /* Custom scrollbar */
@@ -1132,201 +1449,104 @@ function App() {
           border-radius: 10px;
         }
         
-        ::-webkit-scrollbar-thumb:hover {
-          background: ${isDark ? 'rgba(147, 51, 234, 0.8)' : 'rgba(59, 130, 246, 0.8)'};
-        }
-        
-        /* Glass morphism utilities */
         .glass {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-        }
-        
-        /* Animated gradient backgrounds */
-        .animated-bg {
-          background-size: 200% 200%;
-          animation: gradient 15s ease infinite;
-        }
-        
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        /* Floating animation */
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        .float {
-          animation: float 6s ease-in-out infinite;
         }
       `}</style>
 
       <div className={`
         min-h-screen pb-32 transition-all duration-700 relative overflow-hidden
-        bg-gradient-to-br ${themeConfig.bg} animated-bg
+        bg-gradient-to-br ${themeConfig.bg}
         ${isThaiMode ? 'font-thai' : 'font-inter'}
       `}>
-        {/* Floating particles background */}
-        <FloatingParticles isDark={isDark} isThaiMode={isThaiMode} />
-        
-        <PullToRefresh onRefresh={handleRefresh} t={t} theme={currentTheme} isDark={isDark}>
-          <div className="max-w-5xl mx-auto relative z-10">
-            {/* Ultra-enhanced Header */}
-            <div className={`
-              sticky top-0 z-40 border-b p-6 mb-8 glass
-              ${themeConfig.headerBg} ${themeConfig.cardBorder}
-              shadow-2xl ${themeConfig.shadowColor}
-            `}>
-              <div className="flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h1 className={`
-                      text-2xl sm:text-3xl lg:text-4xl font-black mb-2
-                      bg-gradient-to-r ${themeConfig.accent} bg-clip-text text-transparent
-                      animate-pulse
-                    `}>
-                      {t.appTitle}
-                    </h1>
-                    <p className={`
-                      text-sm sm:text-base opacity-80 font-medium
-                      ${themeConfig.textSecondary}
-                    `}>
-                      {t.appSubtitle}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <ThemeToggle theme={currentTheme} onToggle={toggleTheme} t={t} />
-                    <LanguageToggle currentLang={language} onToggle={toggleLanguage} isDark={isDark} />
-                    
-                    {user ? (
-                      <div className="flex items-center gap-3">
-                        <div className={`
-                          flex items-center gap-3 px-4 py-3 rounded-2xl glass border
-                          ${isDark ? 'bg-purple-900/40 border-purple-700/30' : isThaiMode ? 'bg-orange-100/60 border-orange-200/30' : 'bg-green-100/60 border-green-200/30'}
-                        `}>
-                          <div className={`
-                            w-3 h-3 rounded-full animate-pulse shadow-lg
-                            ${isDark ? 'bg-purple-400 shadow-purple-400/50' : isThaiMode ? 'bg-orange-500 shadow-orange-500/50' : 'bg-green-500 shadow-green-500/50'}
-                          `}></div>
-                          <span className={`
-                            text-sm font-bold truncate max-w-24
-                            ${isDark ? 'text-purple-200' : isThaiMode ? 'text-orange-700' : 'text-green-700'}
-                          `}>
-                            {user.email.split('@')[0]}
-                          </span>
-                        </div>
-                        <TouchButton
-                          onClick={handleLogout}
-                          variant="danger"
-                          size="sm"
-                          className="p-3"
-                          isDark={isDark}
-                          isThaiMode={isThaiMode}
-                        >
-                          <LogOut size={18} />
-                        </TouchButton>
-                      </div>
-                    ) : (
-                      <TouchButton
-                        onClick={() => setShowAuthModal(true)}
-                        variant="primary"
-                        size="md"
-                        isDark={isDark}
-                        isThaiMode={isThaiMode}
-                      >
-                        <LogIn size={18} />
-                        <span className="hidden sm:inline font-bold">{t.signIn}</span>
-                      </TouchButton>
-                    )}
-                    
-                    {showInstallButton && (
-                      <TouchButton
-                        onClick={() => {/* Install logic */}}
-                        variant="purple"
-                        size="sm"
-                        className="p-3"
-                        isDark={isDark}
-                        isThaiMode={isThaiMode}
-                      >
-                        📱
-                      </TouchButton>
-                    )}
-                  </div>
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* Enhanced Header */}
+          <div className={`
+            sticky top-0 z-40 border-b p-6 mb-8 glass
+            ${themeConfig.headerBg} ${themeConfig.cardBorder}
+            shadow-2xl ${themeConfig.shadowColor}
+          `}>
+            <div className="flex flex-col gap-6">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h1 className={`
+                    text-2xl sm:text-3xl lg:text-4xl font-black mb-2
+                    bg-gradient-to-r ${themeConfig.accent} bg-clip-text text-transparent
+                  `}>
+                    {t.appTitle}
+                  </h1>
+                  <p className={`
+                    text-sm sm:text-base opacity-80 font-medium
+                    ${themeConfig.textSecondary}
+                  `}>
+                    {t.appSubtitle}
+                  </p>
                 </div>
-
-                {/* Ultra-enhanced Search */}
-                <div className="relative">
-                  <Search className={`
-                    absolute left-6 top-1/2 transform -translate-y-1/2 animate-pulse
-                    ${isDark ? 'text-purple-400' : isThaiMode ? 'text-orange-400' : 'text-blue-400'}
-                  `} size={22} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder={t.searchPlaceholder}
-                    className={`
-                      w-full pl-16 pr-6 py-4 border-2 rounded-3xl focus:outline-none focus:ring-4 focus:border-transparent 
-                      transition-all duration-300 glass font-medium text-lg backdrop-blur-xl
-                      ${isDark 
-                        ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-                        : isThaiMode 
-                        ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
-                        : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                      }
-                      hover:scale-[1.02] transform-gpu shadow-xl ${themeConfig.shadowColor}
-                    `}
-                  />
+                
+                <div className="flex items-center gap-3">
+                  <TouchButton onClick={toggleTheme} variant="secondary" size="sm" isDark={isDark}>
+                    {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                  </TouchButton>
+                  <TouchButton onClick={toggleLanguage} variant="secondary" size="sm" isDark={isDark}>
+                    <Globe size={16} />
+                    {language === 'th' ? 'ไทย' : 'EN'}
+                  </TouchButton>
+                  
+                  {user ? (
+                    <div className="flex items-center gap-3">
+                      <div className={`
+                        flex items-center gap-3 px-4 py-3 rounded-2xl glass border
+                        ${isDark ? 'bg-purple-900/40 border-purple-700/30' : isThaiMode ? 'bg-orange-100/60 border-orange-200/30' : 'bg-green-100/60 border-green-200/30'}
+                      `}>
+                        <div className={`
+                          w-3 h-3 rounded-full animate-pulse
+                          ${isDark ? 'bg-purple-400' : isThaiMode ? 'bg-orange-500' : 'bg-green-500'}
+                        `}></div>
+                        <span className={`
+                          text-sm font-bold truncate max-w-24
+                          ${isDark ? 'text-purple-200' : isThaiMode ? 'text-orange-700' : 'text-green-700'}
+                        `}>
+                          {user.email.split('@')[0]}
+                        </span>
+                      </div>
+                      <TouchButton onClick={() => setUser(null)} variant="danger" size="sm" className="p-3" isDark={isDark}>
+                        <LogOut size={18} />
+                      </TouchButton>
+                    </div>
+                  ) : (
+                    <TouchButton onClick={() => setShowAuthModal(true)} variant="primary" size="md" isDark={isDark}>
+                      <LogIn size={18} />
+                      <span className="hidden sm:inline font-bold">{t.signIn}</span>
+                    </TouchButton>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="px-6">
-              {/* Enhanced status indicators */}
-              {!user && (
-                <div className={`
-                  mb-8 p-6 border rounded-3xl glass shadow-2xl ${themeConfig.shadowColor}
-                  ${isDark ? 'bg-yellow-900/40 border-yellow-700/30' : 'bg-yellow-50/80 border-yellow-200/50'}
-                `}>
-                  <p className={`
-                    font-bold flex items-center gap-3 text-lg
-                    ${isDark ? 'text-yellow-200' : 'text-yellow-800'}
-                  `}>
-                    🔒 {t.signInMessage}
-                  </p>
-                </div>
-              )}
-              
-              {user && (
-                <div className={`
-                  mb-8 p-6 rounded-3xl border glass shadow-2xl ${themeConfig.shadowColor}
-                  ${isDark ? 'bg-purple-900/40 border-purple-700/30' : isThaiMode ? 'bg-orange-50/80 border-orange-200/50' : 'bg-blue-50/80 border-blue-200/50'}
-                `}>
-                  <p className={`
-                    text-sm sm:text-base flex items-center gap-3 font-bold
-                    ${isDark ? 'text-purple-200' : isThaiMode ? 'text-orange-700' : 'text-blue-700'}
-                  `}>
-                    <div className={`
-                      w-3 h-3 rounded-full animate-pulse shadow-lg
-                      ${isDark ? 'bg-purple-400 shadow-purple-400/50' : isThaiMode ? 'bg-orange-500 shadow-orange-500/50' : 'bg-blue-500 shadow-blue-500/50'}
-                    `}></div>
-                    {t.syncedToCloud}
-                  </p>
-                </div>
-              )}
+          <div className="px-6">
+            {/* Advanced Search & Filters */}
+            <AdvancedFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filters={filters}
+              setFilters={setFilters}
+              onCheckUrls={checkAllUrls}
+              isCheckingUrls={isCheckingUrls}
+              t={t}
+              isDark={isDark}
+              isThaiMode={isThaiMode}
+              themeConfig={themeConfig}
+            />
 
-              {/* Ultra-enhanced URL Input Card */}
+            {/* Advanced Action Bar */}
+            {user && (
               <div className={`
-                ${themeConfig.cardBg} rounded-3xl shadow-2xl p-8 mb-8 border glass
+                ${themeConfig.cardBg} rounded-2xl shadow-xl p-6 mb-6 border glass
                 ${themeConfig.cardBorder} ${themeConfig.shadowColor}
-                hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.01]
               `}>
-                <div className="flex gap-4 mb-6">
+                <div className="flex flex-wrap gap-3 mb-4">
                   <input
                     type="text"
                     value={inputUrl}
@@ -1334,208 +1554,324 @@ function App() {
                     onKeyPress={handleKeyPress}
                     placeholder={t.enterUrl}
                     className={`
-                      flex-1 px-6 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:border-transparent 
-                      transition-all duration-300 font-medium text-lg glass backdrop-blur-xl
+                      flex-1 min-w-0 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent 
+                      transition-all duration-300 font-medium glass backdrop-blur-xl
                       ${isDark 
                         ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
                         : isThaiMode 
                         ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
                         : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                       }
-                      shadow-xl ${themeConfig.shadowColor}
                     `}
                     disabled={!user}
                     autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    inputMode="url"
                   />
                   <TouchButton
                     onClick={handleUrlSubmit}
-                    disabled={!user || inputUrl === 'https://'}
+                    disabled={!user || !urlUtils.isValidUrl(inputUrl)}
                     variant="primary"
-                    size="lg"
-                    className="px-8 font-bold text-lg"
+                    size="md"
                     isDark={isDark}
                     isThaiMode={isThaiMode}
                   >
+                    <Plus size={18} />
                     {t.addUrl}
                   </TouchButton>
                 </div>
 
-                {/* Enhanced action buttons */}
+                {/* Advanced bulk actions */}
                 {selectedUrls.length > 0 && (
                   <div className="flex flex-wrap gap-3">
-                    <TouchButton variant="success" size="md" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Share2 size={20} />
-                      {t.share} ({selectedUrls.length})
+                    <TouchButton 
+                      onClick={() => setShowBulkEdit(true)}
+                      variant="primary" 
+                      size="sm" 
+                      isDark={isDark} 
+                      isThaiMode={isThaiMode}
+                    >
+                      <Edit3 size={16} />
+                      {t.bulkEdit} ({selectedUrls.length})
                     </TouchButton>
-                    <TouchButton variant="warning" size="md" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Download size={20} />
-                      {t.export} ({selectedUrls.length})
+                    <TouchButton variant="success" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
+                      <Share2 size={16} />
+                      {t.share}
                     </TouchButton>
-                    <TouchButton variant="danger" size="md" isDark={isDark} isThaiMode={isThaiMode}>
-                      <Trash2 size={20} />
-                      {t.delete} ({selectedUrls.length})
+                    <TouchButton variant="warning" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
+                      <Download size={16} />
+                      {t.export}
+                    </TouchButton>
+                    <TouchButton variant="danger" size="sm" isDark={isDark} isThaiMode={isThaiMode}>
+                      <Trash2 size={16} />
+                      {t.delete}
                     </TouchButton>
                   </div>
                 )}
-              </div>
 
-              {/* Enhanced Toggle All URLs */}
-              {urls.length > 0 && user && (
-                <div className="flex justify-center mb-8">
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <TouchButton 
+                    onClick={() => setShowDuplicates(!showDuplicates)}
+                    variant="secondary" 
+                    size="sm" 
+                    isDark={isDark} 
+                    isThaiMode={isThaiMode}
+                  >
+                    <Copy size={16} />
+                    {t.duplicates}
+                  </TouchButton>
+                </div>
+              </div>
+            )}
+
+            {/* Duplicate Manager */}
+            {showDuplicates && (
+              <div className="mb-6">
+                <DuplicateManager
+                  urls={urls}
+                  onRemoveDuplicates={removeDuplicates}
+                  t={t}
+                  isDark={isDark}
+                  isThaiMode={isThaiMode}
+                  themeConfig={themeConfig}
+                />
+              </div>
+            )}
+
+            {/* Enhanced Categories with Advanced URL Items */}
+            <div className="space-y-6">
+              {categories.map(category => {
+                const categoryUrls = urlsByCategory[category] || [];
+                const isExpanded = expandedCategories[category] && !allUrlsHidden;
+                const selectedInCategory = categoryUrls.filter(url => selectedUrls.includes(url.id)).length;
+                
+                if (categoryUrls.length === 0 && searchTerm) return null;
+                
+                return (
+                  <div key={category} className={`
+                    ${themeConfig.cardBg} rounded-3xl shadow-2xl overflow-hidden border 
+                    ${themeConfig.cardBorder} ${themeConfig.shadowColor}
+                    hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.01]
+                  `}>
+                    <div
+                      className={`
+                        p-6 cursor-pointer transition-all duration-300 relative overflow-hidden
+                        ${isDark 
+                          ? 'bg-gradient-to-r from-gray-800/30 to-gray-700/30 hover:from-gray-700/40 hover:to-gray-600/40' 
+                          : isThaiMode 
+                          ? 'bg-gradient-to-r from-yellow-50/50 to-orange-50/50 hover:from-yellow-100/60 hover:to-orange-100/60'
+                          : 'bg-gradient-to-r from-blue-50/50 to-indigo-50/50 hover:from-blue-100/60 hover:to-indigo-100/60'
+                        }
+                      `}
+                      onClick={() => setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <div className={`
+                            w-4 h-4 rounded-full flex-shrink-0 animate-pulse shadow-lg
+                            ${isDark 
+                              ? isThaiMode ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gradient-to-r from-purple-400 to-pink-500'
+                              : isThaiMode ? 'bg-gradient-to-r from-yellow-500 to-orange-600' : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                            }
+                          `}></div>
+                          <div className={isThaiMode ? 'font-thai' : ''}>
+                            <span className={`font-bold text-xl ${themeConfig.text}`}>{category}</span>
+                            <div className={`text-sm ${themeConfig.textSecondary} flex gap-3 mt-1`}>
+                              <span>{categoryUrls.length} {t.urls}</span>
+                              {selectedInCategory > 0 && (
+                                <span className={`font-semibold ${isDark ? 'text-purple-300' : 'text-blue-600'}`}>
+                                  {selectedInCategory} {t.selected}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {categoryUrls.length > 0 && (
+                            <TouchButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const categoryIds = categoryUrls.map(u => u.id);
+                                const allSelected = categoryIds.every(id => selectedUrls.includes(id));
+                                if (allSelected) {
+                                  setSelectedUrls(selectedUrls.filter(id => !categoryIds.includes(id)));
+                                } else {
+                                  setSelectedUrls([...new Set([...selectedUrls, ...categoryIds])]);
+                                }
+                              }}
+                              variant={isDark ? "purple" : isThaiMode ? "warning" : "primary"}
+                              size="sm"
+                              className="text-xs font-bold"
+                              isDark={isDark}
+                              isThaiMode={isThaiMode}
+                            >
+                              {selectedInCategory === categoryUrls.length ? t.deselectAll : t.selectAll}
+                            </TouchButton>
+                          )}
+                          <div className={`
+                            p-3 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-sm
+                            ${isDark ? 'bg-gray-700/60' : 'bg-white/80'}
+                            ${isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'}
+                          `}>
+                            <ChevronDown size={20} className={themeConfig.textSecondary} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Enhanced expand/collapse */}
+                    <div className={`
+                      transition-all duration-500 ease-out overflow-hidden
+                      ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}
+                    `}>
+                      <div className={`border-t ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+                        {categoryUrls.map(url => (
+                          <URLItem
+                            key={url.id}
+                            url={url}
+                            isSelected={selectedUrls.includes(url.id)}
+                            onSelect={() => toggleSelectUrl(url.id)}
+                            onQRCode={() => openQRModal(url.url)}
+                            onSwipeDelete={() => {
+                              setUrls(prev => prev.filter(u => u.id !== url.id));
+                            }}
+                            onEdit={() => {
+                              // Edit functionality would go here
+                            }}
+                            onCheckHealth={checkSingleUrl}
+                            theme={currentTheme}
+                            isDark={isDark}
+                            isThaiMode={isThaiMode}
+                            t={t}
+                            showPreview={true}
+                          />
+                        ))}
+                        {categoryUrls.length === 0 && (
+                          <div className={`p-8 text-center text-lg font-medium ${themeConfig.textSecondary}`}>
+                            {t.noUrlsInCategory}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Enhanced empty state */}
+            {urls.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-8xl mb-6 animate-bounce">🔗</div>
+                <h3 className={`text-2xl sm:text-3xl font-black mb-4 ${themeConfig.text}`}>
+                  {t.noUrlsYet}
+                </h3>
+                <p className={`mb-8 text-lg font-medium ${themeConfig.textSecondary}`}>
+                  {t.noUrlsMessage}
+                </p>
+                {user && (
                   <TouchButton
-                    onClick={toggleAllUrls}
-                    variant="purple"
+                    onClick={() => {
+                      setInputUrl('https://example.com');
+                      setTimeout(() => document.querySelector('input[type="text"]')?.focus(), 100);
+                    }}
+                    variant="primary"
                     size="lg"
-                    className="px-8 font-bold"
+                    className="font-bold text-xl px-12 py-6"
                     isDark={isDark}
                     isThaiMode={isThaiMode}
                   >
-                    {allUrlsHidden ? (
-                      <>
-                        <Eye size={22} />
-                        {t.showAllUrls}
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff size={22} />
-                        {t.hideAllUrls}
-                      </>
-                    )}
+                    <Plus size={24} />
+                    {t.addFirstUrl}
                   </TouchButton>
-                </div>
-              )}
-
-              {/* Enhanced Categories */}
-              <div className="space-y-6">
-                {categories.map(category => {
-                  const categoryUrls = urlsByCategory[category] || [];
-                  const isExpanded = expandedCategories[category] && !allUrlsHidden;
-                  const selectedInCategory = categoryUrls.filter(url => selectedUrls.includes(url.id)).length;
-                  
-                  if (categoryUrls.length === 0 && searchTerm) return null;
-                  
-                  return (
-                    <CategoryCard
-                      key={category}
-                      category={category}
-                      urlCount={categoryUrls.length}
-                      selectedCount={selectedInCategory}
-                      isExpanded={isExpanded}
-                      onToggle={(e) => toggleCategory(category, e)}
-                      onSelectAll={() => selectAllInCategory(category)}
-                      t={t}
-                      theme={currentTheme}
-                      isDark={isDark}
-                      isThaiMode={isThaiMode}
-                    >
-                      {categoryUrls.map(url => (
-                        <URLItem
-                          key={url.id}
-                          url={url}
-                          isSelected={selectedUrls.includes(url.id)}
-                          onSelect={() => toggleSelectUrl(url.id)}
-                          onQRCode={() => openQRModal(url.url)}
-                          onSwipeDelete={() => {
-                            console.log('Swipe delete:', url.id);
-                          }}
-                          theme={currentTheme}
-                          isDark={isDark}
-                          isThaiMode={isThaiMode}
-                        />
-                      ))}
-                      {categoryUrls.length === 0 && (
-                        <div className={`
-                          p-8 text-center text-lg font-medium
-                          ${themeConfig.textSecondary}
-                        `}>
-                          {t.noUrlsInCategory}
-                        </div>
-                      )}
-                    </CategoryCard>
-                  );
-                })}
+                )}
               </div>
-
-              {/* Enhanced empty state */}
-              {urls.length === 0 && (
-                <div className="text-center py-16">
-                  <div className="text-8xl mb-6 animate-bounce">🔗</div>
-                  <h3 className={`
-                    text-2xl sm:text-3xl font-black mb-4
-                    ${themeConfig.text}
-                  `}>
-                    {t.noUrlsYet}
-                  </h3>
-                  <p className={`
-                    mb-8 text-lg font-medium
-                    ${themeConfig.textSecondary}
-                  `}>
-                    {t.noUrlsMessage}
-                  </p>
-                  {user && (
-                    <TouchButton
-                      onClick={() => {
-                        setInputUrl('https://example.com');
-                        setTimeout(() => document.querySelector('input[type="text"]').focus(), 100);
-                      }}
-                      variant="primary"
-                      size="lg"
-                      className="font-bold text-xl px-12 py-6"
-                      isDark={isDark}
-                      isThaiMode={isThaiMode}
-                    >
-                      <Plus size={24} />
-                      {t.addFirstUrl}
-                    </TouchButton>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Enhanced Floating Action Button */}
-          <FloatingActionButton
-            visible={showFAB && user}
-            onClick={() => {
-              document.querySelector('input[type="text"]').focus();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            theme={currentTheme}
+        {/* Enhanced Modals */}
+        {showBulkEdit && (
+          <BulkEditModal
+            selectedUrls={selectedUrls}
+            onClose={() => setShowBulkEdit(false)}
+            onBulkAction={handleBulkAction}
+            categories={categories}
+            t={t}
             isDark={isDark}
             isThaiMode={isThaiMode}
+            themeConfig={themeConfig}
           />
+        )}
 
-          {/* Modals would go here - simplified for space */}
-          {/* Basic modal placeholders */}
-          {showQRModal && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-              <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className={`text-2xl font-bold ${themeConfig.text}`}>{t.qrCode}</h3>
-                  <TouchButton onClick={() => setShowQRModal(null)} variant="secondary" size="sm" className="p-3" isDark={isDark}>
-                    <X size={20} />
-                  </TouchButton>
-                </div>
-                <div className="text-center mb-6">
-                  <div className={`p-6 rounded-2xl inline-block ${isDark ? 'bg-gray-700/60' : 'bg-gray-50/80'}`}>
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(showQRModal)}`}
-                      alt="QR Code"
-                      className="rounded-lg shadow-lg"
-                    />
-                  </div>
-                </div>
-                <div className={`p-4 rounded-2xl ${isDark ? 'bg-gray-700/60' : 'bg-gray-50/80'}`}>
-                  <p className={`text-sm break-all text-center font-mono ${themeConfig.textSecondary}`}>{showQRModal}</p>
+        {showQRModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className={`text-2xl font-bold ${themeConfig.text}`}>{t.qrCode}</h3>
+                <TouchButton onClick={() => setShowQRModal(null)} variant="secondary" size="sm" className="p-3" isDark={isDark}>
+                  <X size={20} />
+                </TouchButton>
+              </div>
+              <div className="text-center mb-6">
+                <div className={`p-6 rounded-2xl inline-block ${isDark ? 'bg-gray-700/60' : 'bg-gray-50/80'}`}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(showQRModal)}`}
+                    alt="QR Code"
+                    className="rounded-lg shadow-lg"
+                  />
                 </div>
               </div>
+              <div className={`p-4 rounded-2xl ${isDark ? 'bg-gray-700/60' : 'bg-gray-50/80'}`}>
+                <p className={`text-sm break-all text-center font-mono ${themeConfig.textSecondary}`}>{showQRModal}</p>
+              </div>
             </div>
-          )}
-        </PullToRefresh>
+          </div>
+        )}
+
+        {showAuthModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className={`${themeConfig.cardBg} p-8 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className={`text-2xl font-bold ${themeConfig.text}`}>{t.signInRequired}</h3>
+              </div>
+              <div className="mb-6">
+                <input
+                  type="email"
+                  placeholder={t.emailPlaceholder}
+                  className={`
+                    w-full p-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
+                    ${isDark 
+                      ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
+                      : isThaiMode 
+                      ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
+                      : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900'
+                    }
+                  `}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.target.value.trim()) {
+                      setUser({ email: e.target.value.trim() });
+                      setShowAuthModal(false);
+                    }
+                  }}
+                />
+              </div>
+              <TouchButton
+                onClick={() => {
+                  const email = document.querySelector('input[type="email"]').value.trim();
+                  if (email) {
+                    setUser({ email });
+                    setShowAuthModal(false);
+                  }
+                }}
+                variant="primary"
+                size="lg"
+                className="w-full"
+                isDark={isDark}
+                isThaiMode={isThaiMode}
+              >
+                {t.signIn}
+              </TouchButton>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
