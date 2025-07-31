@@ -1952,3 +1952,6 @@ function App() {
                       ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100' 
                       : isThaiMode 
                       ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900'
+                      : 'border-gray-300 bg-white text-black' // default/fallback style
+  }
+`}
