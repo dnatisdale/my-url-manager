@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, Download, Share2, Trash2, QrCode, ChevronDown, X, LogIn, LogOut, Eye, EyeOff, Plus, Sparkles, Globe, Moon, Sun, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle, Clock, Edit3, Copy, ExternalLink, Zap, Database, HardDrive, Wifi, WifiOff, Activity, BarChart3, TrendingUp, Archive, Save, CloudDownload, CloudUpload, Gauge, MemoryStick, FolderPlus, Tag, Check } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check } from 'lucide-react';
 
 // Import our modularized components and utilities
 import { translations } from './constants/translations';
@@ -24,15 +24,16 @@ function App() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   
   // Modal states
   const [categoryModal, setCategoryModal] = useState({
     isOpen: false,
-    mode: 'add', // 'add', 'edit', 'delete'
+    mode: 'add',
     category: ''
   });
   
-  // QR Code modal state
+  // Share modal state
   const [shareModal, setShareModal] = useState({
     isOpen: false,
     url: '',
@@ -69,7 +70,7 @@ function App() {
   useEffect(() => {
     loadData();
     updateMemoryUsage();
-  }, []);
+  }, [updateMemoryUsage]);
 
   // Update performance metrics when URLs change
   useEffect(() => {
@@ -516,36 +517,41 @@ function App() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                  <Plus className="text-white" size={20} />
+                  <Save className="text-white" size={20} />
                 </div>
                 <div>
                   <h3 className={`text-lg font-semibold ${themeConfig.text}`}>
                     {t.addUrl}
                   </h3>
                   <p className={`text-sm ${themeConfig.textSecondary}`}>
-                    {t.syncedToCloud}
+                    Saved locally on your device
                   </p>
                 </div>
               </div>
               
               <div className="flex gap-3">
-                <input
-                  type="url"
-                  value={currentUrl}
-                  onChange={(e) => setCurrentUrl(e.target.value)}
-                  onKeyPress={handleUrlKeyPress}
-                  placeholder="example.com (https:// will be added automatically)"
-                  className={`
-                    flex-1 p-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                    transition-all duration-300 font-medium
-                    ${isDarkMode 
-                      ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-                      : isThaiMode 
-                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                      : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                    }
-                  `}
-                />
+                <div className="flex-1 relative">
+                  <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeConfig.textSecondary} opacity-60 font-medium`}>
+                    https://
+                  </span>
+                  <input
+                    type="text"
+                    value={currentUrl}
+                    onChange={(e) => setCurrentUrl(e.target.value)}
+                    onKeyPress={handleUrlKeyPress}
+                    placeholder="example.com"
+                    className={`
+                      w-full pl-20 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
+                      transition-all duration-300 font-medium
+                      ${isDarkMode 
+                        ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
+                        : isThaiMode 
+                        ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
+                        : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
+                      }
+                    `}
+                  />
+                </div>
                 <TouchButton
                   onClick={addUrl}
                   variant="primary"
@@ -554,7 +560,7 @@ function App() {
                   isThaiMode={isThaiMode}
                   disabled={!currentUrl.trim()}
                 >
-                  <Plus size={20} />
+                  <Save size={20} />
                   {t.addUrl}
                 </TouchButton>
               </div>
@@ -644,7 +650,7 @@ function App() {
                   isDark={isDarkMode}
                   isThaiMode={isThaiMode}
                 >
-                  <Plus size={20} />
+                  <Save size={20} />
                   {t.addFirstUrl}
                 </TouchButton>
               </div>
@@ -715,10 +721,6 @@ function App() {
                             </h4>
                             <p className={`text-sm ${themeConfig.textSecondary} truncate`}>
                               {url.url}
-                            </p>
-                            <p className={`text-xs ${themeConfig.textSecondary} mt-1`}>
-                              <Clock size={12} className="inline mr-1" />
-                              {new Date(url.addedAt).toLocaleDateString()}
                             </p>
                           </div>
 
@@ -795,8 +797,24 @@ function App() {
           </div>
         )}
 
-        {/* Performance Stats */}
+        {/* Analytics Button */}
         {user && urls.length > 0 && (
+          <div className="text-center">
+            <TouchButton
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              variant="secondary"
+              size="md"
+              isDark={isDarkMode}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 size={20} />
+              {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+            </TouchButton>
+          </div>
+        )}
+
+        {/* Performance Stats - Only show when toggled */}
+        {user && urls.length > 0 && showAnalytics && (
           <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>

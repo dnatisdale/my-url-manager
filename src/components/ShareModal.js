@@ -100,7 +100,7 @@ export const ShareModal = ({
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-xl font-bold ${themeConfig.text}`}>
-            {showQR ? 'Share QR Code' : 'Share URL'}
+            {showQR ? 'QR Code' : 'Share URL'}
           </h3>
           <TouchButton onClick={onClose} variant="secondary" size="sm" className="p-2" isDark={isDark}>
             <X size={20} />
@@ -110,23 +110,21 @@ export const ShareModal = ({
         {/* QR Code Display (if showing QR) */}
         {showQR && (
           <div className="text-center mb-6">
-            <div className="inline-block p-4 bg-white rounded-2xl shadow-lg">
-              <img 
-                src={qrUrl} 
-                alt={`QR Code for ${title}`}
-                className="block mx-auto"
-                style={{ width: qrSize, height: qrSize }}
-              />
-            </div>
+            <img 
+              src={qrUrl} 
+              alt={`QR Code for ${title}`}
+              className="block mx-auto rounded-2xl shadow-lg"
+              style={{ width: qrSize, height: qrSize }}
+            />
           </div>
         )}
 
         {/* URL Info */}
-        <div className="mb-6">
+        <div className="mb-6 text-center">
           <p className={`font-semibold ${themeConfig.text} mb-2`}>
             {title}
           </p>
-          <p className={`text-sm ${themeConfig.textSecondary} break-all bg-gray-50 dark:bg-gray-800 p-3 rounded-lg`}>
+          <p className={`text-sm ${themeConfig.textSecondary} break-all`}>
             {url}
           </p>
         </div>
