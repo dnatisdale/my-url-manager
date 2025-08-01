@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check, Download, AlertTriangle } from 'lucide-react';
+import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check, Download } from 'lucide-react';
 
 // Import our modularized components and utilities
 import { translations } from './constants/translations';
@@ -40,7 +40,6 @@ function App() {
     category: ''
   });
   
-  // Share modal state
   const [shareModal, setShareModal] = useState({
     isOpen: false,
     url: '',
@@ -48,7 +47,6 @@ function App() {
     showQR: false
   });
   
-  // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -57,10 +55,8 @@ function App() {
     type: 'danger'
   });
 
-  // Backup/Export modal state
   const [backupModal, setBackupModal] = useState(false);
   
-  // Toast notifications
   const [toast, setToast] = useState({
     isVisible: false,
     message: '',
@@ -86,7 +82,6 @@ function App() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setShowInstallButton(false);
     }
@@ -116,7 +111,6 @@ function App() {
     loadData();
     updateMemoryUsage();
     
-    // Load remembered email
     const savedEmail = localStorage.getItem('goodNewsRememberedEmail');
     if (savedEmail) {
       setEmail(savedEmail);
@@ -164,7 +158,6 @@ function App() {
       localStorage.setItem('goodNewsTheme', isDarkMode ? 'dark' : 'light');
       localStorage.setItem('goodNewsLanguage', isThaiMode ? 'th' : 'en');
       
-      // Sync to cloud if user is signed in and online
       if (user && isOnline && urls.length > 0) {
         await syncToCloud();
       }
@@ -229,13 +222,10 @@ function App() {
   // URL validation function
   const isValidUrl = (string) => {
     try {
-      // Allow common domains without protocol
       if (string.includes('.') && !string.includes(' ') && string.length > 3) {
-        // Test with https:// prefix
         new URL('https://' + string);
         return true;
       }
-      // Test as-is if it has protocol
       new URL(string);
       return true;
     } catch (_) {
@@ -275,10 +265,8 @@ function App() {
     
     setIsSigningIn(true);
     
-    // Remember email
     localStorage.setItem('goodNewsRememberedEmail', email.trim());
     
-    // Simulate sign-in process
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const newUser = {
@@ -288,7 +276,6 @@ function App() {
     
     setUser(newUser);
     
-    // Load data from cloud
     await loadFromCloud(email.trim());
     
     setEmail('');
@@ -309,13 +296,11 @@ function App() {
     
     let url = currentUrl.trim();
     
-    // Validate URL
     if (!isValidUrl(url)) {
       showToast(t.invalidUrl + ': ' + t.pleaseEnterValidUrl, 'error');
       return;
     }
     
-    // Auto-add https:// if no protocol
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
     }
@@ -379,7 +364,6 @@ function App() {
         });
         showToast(t.urlsShared, 'success');
       } catch (error) {
-        // User cancelled or error occurred
         if (error.name !== 'AbortError') {
           copyToClipboard(shareText);
         }
@@ -504,10 +488,8 @@ function App() {
     setIsThaiMode(!isThaiMode);
   };
 
-  // Main render
   return (
     <div className={`min-h-screen bg-gradient-to-br ${themeConfig.bg} transition-all duration-500`}>
-      {/* Toast Notifications */}
       <Toast
         message={toast.message}
         type={toast.type}
@@ -515,13 +497,11 @@ function App() {
         onClose={hideToast}
       />
 
-      {/* Header */}
       <header className={`sticky top-0 z-30 ${themeConfig.headerBg} border-b ${themeConfig.cardBorder} backdrop-blur-xl`}>
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo and Title */}
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center shadow-lg`}>
+              <div className={`w-10 h-10 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
                 <Sparkles className="text-white" size={20} />
               </div>
               <div>
@@ -534,9 +514,7 @@ function App() {
               </div>
             </div>
 
-            {/* Controls */}
             <div className="flex items-center gap-2">
-              {/* PWA Install Button */}
               {showInstallButton && (
                 <TouchButton
                   onClick={handleInstallPWA}
@@ -550,7 +528,6 @@ function App() {
                 </TouchButton>
               )}
 
-              {/* Online/Offline Status */}
               <div 
                 className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                 title={isOnline ? `${t.online} - Connected to internet` : `${t.offline} - Working without internet`}
@@ -558,7 +535,6 @@ function App() {
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
               </div>
 
-              {/* Sync Status */}
               {user && (
                 <div 
                   className={`px-3 py-1 rounded-lg ${isSyncing ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}
@@ -568,7 +544,6 @@ function App() {
                 </div>
               )}
 
-              {/* Theme Toggle */}
               <TouchButton
                 onClick={toggleTheme}
                 variant="secondary"
@@ -580,7 +555,6 @@ function App() {
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </TouchButton>
 
-              {/* Language Toggle */}
               <TouchButton
                 onClick={toggleLanguage}
                 variant="secondary"
@@ -592,7 +566,6 @@ function App() {
                 <Globe size={18} />
               </TouchButton>
 
-              {/* User Actions */}
               {user ? (
                 <TouchButton
                   onClick={handleSignOut}
@@ -605,7 +578,7 @@ function App() {
                 </TouchButton>
               ) : (
                 <TouchButton
-                  onClick={() => {/* Sign in handled by form below */}}
+                  onClick={() => {}}
                   variant="primary"
                   size="sm"
                   isDark={isDarkMode}
@@ -620,11 +593,9 @@ function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Sign In Section */}
         {!user && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
             <div className="text-center space-y-4">
               <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
                 <LogIn className="text-white" size={24} />
@@ -672,9 +643,8 @@ function App() {
           </div>
         )}
 
-        {/* URL Input Section - Only show if signed in */}
         {user && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
@@ -729,11 +699,9 @@ function App() {
           </div>
         )}
 
-        {/* Search and Controls */}
         {user && urls.length > 0 && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
             <div className="space-y-4">
-              {/* Search Bar */}
               <div className="relative">
                 <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeConfig.textSecondary}`} size={20} />
                 <input
@@ -754,7 +722,6 @@ function App() {
                 />
               </div>
 
-              {/* Bulk Actions */}
               <div className="flex flex-wrap gap-3">
                 <TouchButton
                   onClick={selectAllUrls}
@@ -790,11 +757,10 @@ function App() {
           </div>
         )}
 
-        {/* URLs List */}
         {user && (
           <div className="space-y-4">
             {Object.keys(groupedUrls).length === 0 ? (
-              <div className={`${themeConfig.cardBg} rounded-3xl p-12 border ${themeConfig.cardBorder} ${themeConfig.shadowColor} text-center`}>
+              <div className={`${themeConfig.cardBg} rounded-3xl p-12 border ${themeConfig.cardBorder} text-center`}>
                 <div className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center mb-6`}>
                   <Database className="text-white" size={32} />
                 </div>
@@ -805,7 +771,7 @@ function App() {
                   {t.noUrlsMessage}
                 </p>
                 <TouchButton
-                  onClick={() => {/* Focus URL input */}}
+                  onClick={() => {}}
                   variant="primary"
                   size="lg"
                   isDark={isDarkMode}
@@ -817,8 +783,7 @@ function App() {
               </div>
             ) : (
               Object.entries(groupedUrls).map(([category, categoryUrls]) => (
-                <div key={category} className={`${themeConfig.cardBg} rounded-3xl border ${themeConfig.cardBorder} ${themeConfig.shadowColor} overflow-hidden`}>
-                  {/* Category Header */}
+                <div key={category} className={`${themeConfig.cardBg} rounded-3xl border ${themeConfig.cardBorder} overflow-hidden`}>
                   <div className="p-6 border-b border-gray-200/20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -861,12 +826,10 @@ function App() {
                     </div>
                   </div>
 
-                  {/* URLs in Category */}
                   <div className="divide-y divide-gray-200/20">
                     {categoryUrls.map((url) => (
                       <div key={url.id} className="p-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
                         <div className="flex items-center gap-4">
-                          {/* Selection Checkbox */}
                           <TouchButton
                             onClick={() => toggleUrlSelection(url.id)}
                             variant="secondary"
@@ -877,7 +840,6 @@ function App() {
                             {selectedUrls.includes(url.id) ? <Check size={16} /> : <div className="w-4 h-4 border-2 border-current rounded"></div>}
                           </TouchButton>
 
-                          {/* URL Info */}
                           <div className="flex-1 min-w-0">
                             <h4 className={`font-semibold ${themeConfig.text} truncate`}>
                               {url.title}
@@ -887,7 +849,6 @@ function App() {
                             </p>
                           </div>
 
-                          {/* Action Buttons */}
                           <div className="flex items-center gap-2">
                             <TouchButton
                               onClick={() => openShareModal(url.url, url.title, true)}
@@ -952,17 +913,6 @@ function App() {
                               title={t.deleteUrl}
                             >
                               <Trash2 size={16} />
-                            </TouchButton>.filter(u => u.id !== url.id));
-                                    showToast('URL deleted', 'success');
-                                  }
-                                );
-                              }}
-                              variant="danger"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                            >
-                              <Trash2 size={16} />
                             </TouchButton>
                           </div>
                         </div>
@@ -975,7 +925,6 @@ function App() {
           </div>
         )}
 
-        {/* Analytics & Backup Buttons */}
         {user && urls.length > 0 && (
           <div className="flex justify-center gap-3">
             <TouchButton
@@ -1003,9 +952,8 @@ function App() {
           </div>
         )}
 
-        {/* Performance Stats - Only show when toggled */}
         {user && urls.length > 0 && showAnalytics && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
                 <BarChart3 className="text-white" size={16} />
@@ -1040,7 +988,6 @@ function App() {
         )}
       </main>
 
-      {/* Action Bar - Fixed bottom bar for bulk actions */}
       <ActionBar
         selectedUrls={selectedUrls}
         urls={urls}
@@ -1054,7 +1001,6 @@ function App() {
         themeConfig={themeConfig}
       />
 
-      {/* Category Modal */}
       <CategoryModal
         isOpen={categoryModal.isOpen}
         onClose={() => setCategoryModal({ isOpen: false, mode: 'add', category: '' })}
@@ -1075,7 +1021,6 @@ function App() {
         themeConfig={themeConfig}
       />
 
-      {/* Share Modal */}
       <ShareModal
         isOpen={shareModal.isOpen}
         onClose={closeShareModal}
@@ -1088,7 +1033,6 @@ function App() {
         onShowToast={showToast}
       />
 
-      {/* Backup/Export Modal */}
       <BackupExportModal
         isOpen={backupModal}
         onClose={() => setBackupModal(false)}
@@ -1102,7 +1046,6 @@ function App() {
         onShowToast={showToast}
       />
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         onClose={closeConfirmModal}
