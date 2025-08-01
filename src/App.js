@@ -9,7 +9,8 @@ import { usePerformanceMonitor, useOfflineStatus } from './hooks/useCustomHooks'
 import { LoadingSpinner, TouchButton, Toast } from './components/UI';
 import { ActionBar } from './components/ActionBar';
 import { CategoryModal } from './components/CategoryModal';
-import { QRCodeModal } from './components/QRCodeModal';
+import { ShareModal } from './components/ShareModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
 
 function App() {
   // Core state
@@ -32,10 +33,20 @@ function App() {
   });
   
   // QR Code modal state
-  const [qrModal, setQrModal] = useState({
+  const [shareModal, setShareModal] = useState({
     isOpen: false,
     url: '',
-    title: ''
+    title: '',
+    showQR: false
+  });
+  
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'danger'
   });
   
   // Toast notifications
@@ -116,14 +127,24 @@ function App() {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // Open QR Code modal
-  const openQRModal = (url, title) => {
-    setQrModal({ isOpen: true, url, title });
+  // Open Share modal
+  const openShareModal = (url, title, showQR = false) => {
+    setShareModal({ isOpen: true, url, title, showQR });
   };
 
-  // Close QR Code modal
-  const closeQRModal = () => {
-    setQrModal({ isOpen: false, url: '', title: '' });
+  // Close Share modal
+  const closeShareModal = () => {
+    setShareModal({ isOpen: false, url: '', title: '', showQR: false });
+  };
+
+  // Open confirmation modal
+  const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm, type });
+  };
+
+  // Close confirmation modal
+  const closeConfirmModal = () => {
+    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, type: 'danger' });
   };
 
   // Sign in function
@@ -158,6 +179,7 @@ function App() {
     if (!currentUrl.trim()) return;
     
     let url = currentUrl.trim();
+    // Auto-add https:// if no protocol
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
     }
@@ -243,11 +265,18 @@ function App() {
     }
   };
 
-  // Delete selected URLs
+  // Delete selected URLs with confirmation
   const deleteSelectedUrls = () => {
-    setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
-    setSelectedUrls([]);
-    showToast(t.urlsDeleted, 'success');
+    const count = selectedUrls.length;
+    openConfirmModal(
+      'Delete URLs',
+      `Are you sure you want to delete ${count} selected URL${count > 1 ? 's' : ''}? This action cannot be undone.`,
+      () => {
+        setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
+        setSelectedUrls([]);
+        showToast(`${count} URL${count > 1 ? 's' : ''} deleted`, 'success');
+      }
+    );
   };
 
   // Change category for selected URLs
@@ -278,13 +307,20 @@ function App() {
     showToast(t.categoryUpdated, 'success');
   };
 
-  // Delete category
+  // Delete category with confirmation
   const deleteCategory = (categoryName) => {
-    setCategories(prev => prev.filter(cat => cat !== categoryName));
-    setUrls(prev => prev.map(url => 
-      url.category === categoryName ? { ...url, category: 'No Category' } : url
-    ));
-    showToast(t.categoryDeleted, 'success');
+    const urlCount = urls.filter(url => url.category === categoryName).length;
+    openConfirmModal(
+      'Delete Category',
+      `Are you sure you want to delete "${categoryName}"? ${urlCount > 0 ? `${urlCount} URL${urlCount > 1 ? 's' : ''} will be moved to "No Category".` : 'This action cannot be undone.'}`,
+      () => {
+        setCategories(prev => prev.filter(cat => cat !== categoryName));
+        setUrls(prev => prev.map(url => 
+          url.category === categoryName ? { ...url, category: 'No Category' } : url
+        ));
+        showToast(t.categoryDeleted, 'success');
+      }
+    );
   };
 
   // Filter URLs based on search term
@@ -498,7 +534,7 @@ function App() {
                   value={currentUrl}
                   onChange={(e) => setCurrentUrl(e.target.value)}
                   onKeyPress={handleUrlKeyPress}
-                  placeholder={t.enterUrl}
+                  placeholder="example.com (https:// will be added automatically)"
                   className={`
                     flex-1 p-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
                     transition-all duration-300 font-medium
@@ -689,7 +725,7 @@ function App() {
                           {/* Action Buttons */}
                           <div className="flex items-center gap-2">
                             <TouchButton
-                              onClick={() => openQRModal(url.url, url.title)}
+                              onClick={() => openShareModal(url.url, url.title, true)}
                               variant="secondary"
                               size="sm"
                               className="p-2"
@@ -721,7 +757,7 @@ function App() {
                             </TouchButton>
 
                             <TouchButton
-                              onClick={() => shareSelectedUrls([url.id])}
+                              onClick={() => openShareModal(url.url, url.title, false)}
                               variant="secondary"
                               size="sm"
                               className="p-2"
@@ -732,8 +768,14 @@ function App() {
 
                             <TouchButton
                               onClick={() => {
-                                setUrls(prev => prev.filter(u => u.id !== url.id));
-                                showToast('URL deleted', 'success');
+                                openConfirmModal(
+                                  'Delete URL',
+                                  `Are you sure you want to delete "${url.title}"? This action cannot be undone.`,
+                                  () => {
+                                    setUrls(prev => prev.filter(u => u.id !== url.id));
+                                    showToast('URL deleted', 'success');
+                                  }
+                                );
                               }}
                               variant="danger"
                               size="sm"
@@ -825,12 +867,29 @@ function App() {
         themeConfig={themeConfig}
       />
 
-      {/* QR Code Modal */}
-      <QRCodeModal
-        isOpen={qrModal.isOpen}
-        onClose={closeQRModal}
-        url={qrModal.url}
-        title={qrModal.title}
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={shareModal.isOpen}
+        onClose={closeShareModal}
+        url={shareModal.url}
+        title={shareModal.title}
+        showQR={shareModal.showQR}
+        t={t}
+        isDark={isDarkMode}
+        themeConfig={themeConfig}
+        onShowToast={showToast}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="Delete"
+        cancelText="Cancel"
         t={t}
         isDark={isDarkMode}
         themeConfig={themeConfig}
