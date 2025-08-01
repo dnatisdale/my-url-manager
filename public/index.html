@@ -8,8 +8,8 @@
     <meta name="description" content="Manage and organize your URLs with QR codes and categories - Thai Good News URL Manager" />
     
     <!-- PWA Meta Tags -->
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/site.webmanifest" />
     
     <!-- Additional PWA Meta Tags for Better Support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -18,6 +18,16 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="msapplication-TileColor" content="#3B82F6" />
     <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- Enhanced PWA Meta Tags -->
+    <meta name="application-name" content="URL Vault" />
+    <meta name="msapplication-starturl" content="/" />
+    <meta name="msapplication-window" content="width=1024;height=768" />
+    <meta name="msapplication-navbutton-color" content="#3B82F6" />
+    
+    <!-- iOS Specific -->
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/apple-touch-icon.png" />
     
     <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,18 +39,77 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     
-    <!-- Service Worker Registration -->
+    <!-- Enhanced Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
               console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New update available
+                    if (confirm('New version available! Reload to update?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
             })
             .catch((registrationError) => {
               console.log('SW registration failed: ', registrationError);
             });
         });
+      }
+
+      // Install prompt handling
+      let deferredPrompt;
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+        
+        // Show install button (you'll handle this in React)
+        window.dispatchEvent(new CustomEvent('pwa-install-available'));
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        deferredPrompt = null;
+      });
+
+      // Function to trigger install prompt (call from React)
+      window.showInstallPrompt = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          deferredPrompt = null;
+        }
+      };
+
+      // Handle shared content
+      if ('serviceWorker' in navigator && 'share' in navigator) {
+        // Check if this is a share target
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedUrl = urlParams.get('url');
+        const sharedText = urlParams.get('text');
+        const sharedTitle = urlParams.get('title');
+        
+        if (sharedUrl || sharedText) {
+          // Store shared content for React to pick up
+          sessionStorage.setItem('sharedContent', JSON.stringify({
+            url: sharedUrl,
+            text: sharedText,
+            title: sharedTitle
+          }));
+        }
       }
     </script>
   </body>
