@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Share2, Trash2, QrCode, X, LogIn, Save, Edit3, Copy, ExternalLink, Database, BarChart3, FolderPlus, Tag, Check } from 'lucide-react';
+import { Search, X, BarChart3, FolderPlus, Check } from 'lucide-react';
 
 // Import our modularized components and utilities
 import { translations } from './constants/translations';
@@ -22,9 +22,10 @@ function App() {
   // Core state
   const [urls, setUrls] = useState([]);
   const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(['No Category', 'Save for Later', 'Thailand']);
+  const [categories, setCategories] = useState(['Save for Later', 'Thailand']);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentUrl, setCurrentUrl] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [isThaiMode, setIsThaiMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [user, setUser] = useState(null);
@@ -56,7 +57,8 @@ function App() {
     title: '',
     message: '',
     onConfirm: null,
-    type: 'danger'
+    type: 'danger',
+    urlsToDelete: null
   });
 
   const [backupModal, setBackupModal] = useState(false);
@@ -195,7 +197,7 @@ function App() {
     
     if (result.success && result.data) {
       setUrls(result.data.urls || []);
-      setCategories(result.data.categories || ['No Category', 'Save for Later', 'Thailand']);
+      setCategories(result.data.categories || ['Save for Later', 'Thailand']);
       showToast('Data loaded from cloud', 'success');
     } else if (result.success && !result.data) {
       showToast('No cloud data found - first time login', 'info');
@@ -248,13 +250,13 @@ function App() {
   };
 
   // Open confirmation modal
-  const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
-    setConfirmModal({ isOpen: true, title, message, onConfirm, type });
+  const openConfirmModal = (title, message, onConfirm, type = 'danger', urlsToDelete = null) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm, type, urlsToDelete });
   };
 
   // Close confirmation modal
   const closeConfirmModal = () => {
-    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, type: 'danger' });
+    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, type: 'danger', urlsToDelete: null });
   };
 
   // Handle import
@@ -294,8 +296,8 @@ function App() {
     showToast('Signed out successfully', 'info');
   };
 
-  // Add URL function with validation
-  const addUrl = () => {
+  // Add URL function with validation and category
+  const addUrl = (category) => {
     if (!currentUrl.trim()) return;
     
     let url = currentUrl.trim();
@@ -313,14 +315,15 @@ function App() {
       id: Date.now(),
       url,
       title: extractDomain(url),
-      category: 'No Category',
+      category: category,
       addedAt: new Date().toISOString(),
       isSelected: false
     };
 
     setUrls(prev => [newUrl, ...prev]);
     setCurrentUrl('');
-    showToast('URL added successfully', 'success');
+    setSelectedCategory('');
+    showToast(t.urlAdded, 'success');
   };
 
   // Extract domain from URL
@@ -389,9 +392,11 @@ function App() {
     }
   };
 
-  // Delete selected URLs with confirmation
+  // Delete selected URLs with confirmation and URL list
   const deleteSelectedUrls = () => {
     const count = selectedUrls.length;
+    const urlsToDelete = urls.filter(url => selectedUrls.includes(url.id));
+    
     openConfirmModal(
       'Delete URLs',
       `Are you sure you want to delete ${count} selected URL${count > 1 ? 's' : ''}? This action cannot be undone.`,
@@ -399,7 +404,9 @@ function App() {
         setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
         setSelectedUrls([]);
         showToast(`${count} URL${count > 1 ? 's' : ''} deleted`, 'success');
-      }
+      },
+      'danger',
+      urlsToDelete
     );
   };
 
@@ -436,11 +443,11 @@ function App() {
     const urlCount = urls.filter(url => url.category === categoryName).length;
     openConfirmModal(
       'Delete Category',
-      `Are you sure you want to delete "${categoryName}"? ${urlCount > 0 ? `${urlCount} URL${urlCount > 1 ? 's' : ''} will be moved to "No Category".` : 'This action cannot be undone.'}`,
+      `Are you sure you want to delete "${categoryName}"? ${urlCount > 0 ? `${urlCount} URL${urlCount > 1 ? 's' : ''} will be moved to "Save for Later".` : 'This action cannot be undone.'}`,
       () => {
         setCategories(prev => prev.filter(cat => cat !== categoryName));
         setUrls(prev => prev.map(url => 
-          url.category === categoryName ? { ...url, category: 'No Category' } : url
+          url.category === categoryName ? { ...url, category: 'Save for Later' } : url
         ));
         showToast(t.categoryDeleted, 'success');
       }
@@ -471,7 +478,9 @@ function App() {
   // Handle Enter key press for URL input
   const handleUrlKeyPress = (e) => {
     if (e.key === 'Enter') {
-      addUrl();
+      if (selectedCategory) {
+        addUrl(selectedCategory);
+      }
     }
   };
 
@@ -501,7 +510,6 @@ function App() {
         onClose={hideToast}
       />
 
-      {/* REPLACED: Header is now a separate component */}
       <HeaderSection
         t={t}
         themeConfig={themeConfig}
@@ -518,7 +526,6 @@ function App() {
       />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* REPLACED: Sign-in form is now a separate component */}
         {!user && (
           <SignInSection
             t={t}
@@ -533,7 +540,6 @@ function App() {
           />
         )}
 
-        {/* REPLACED: URL input form is now a separate component */}
         {user && (
           <URLInputSection
             t={t}
@@ -544,6 +550,9 @@ function App() {
             setCurrentUrl={setCurrentUrl}
             addUrl={addUrl}
             handleUrlKeyPress={handleUrlKeyPress}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
           />
         )}
 
@@ -605,7 +614,6 @@ function App() {
           </div>
         )}
 
-        {/* REPLACED: URL list display is now a separate component */}
         {user && (
           <URLListSection
             groupedUrls={groupedUrls}
@@ -645,7 +653,7 @@ function App() {
               isThaiMode={isThaiMode}
               className="flex items-center gap-2"
             >
-              <Database size={20} />
+              <BarChart3 size={20} />
               Backup & Export
             </TouchButton>
           </div>
@@ -752,6 +760,7 @@ function App() {
         title={confirmModal.title}
         message={confirmModal.message}
         type={confirmModal.type}
+        urlsToDelete={confirmModal.urlsToDelete}
         confirmText="Delete"
         cancelText="Cancel"
         t={t}

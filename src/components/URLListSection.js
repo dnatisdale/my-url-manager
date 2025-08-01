@@ -1,5 +1,5 @@
-import React from 'react';
-import { Database, Tag, Edit3, Trash2, QrCode, ExternalLink, Copy, Share2, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Database, Tag, Edit3, Trash2, QrCode, ExternalLink, Copy, Share2, Check, X, Save } from 'lucide-react';
 import { TouchButton } from './UI';
 
 export const URLListSection = ({
@@ -23,6 +23,38 @@ export const URLListSection = ({
   setCategoryModal
 }) => {
   
+  const [editingUrl, setEditingUrl] = useState(null);
+  const [editValue, setEditValue] = useState('');
+
+  const handleEditUrl = (url) => {
+    setEditingUrl(url.id);
+    setEditValue(url.url);
+  };
+
+  const handleSaveEdit = (urlId) => {
+    setUrls(prev => prev.map(url => 
+      url.id === urlId 
+        ? { ...url, url: editValue, title: extractDomain(editValue) }
+        : url
+    ));
+    setEditingUrl(null);
+    setEditValue('');
+    showToast('URL updated successfully', 'success');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUrl(null);
+    setEditValue('');
+  };
+
+  const extractDomain = (url) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch {
+      return url;
+    }
+  };
+
   const handleDeleteUrl = (url) => {
     openConfirmModal(
       'Delete URL',
@@ -90,18 +122,16 @@ export const URLListSection = ({
                     <Edit3 size={16} />
                   </TouchButton>
                   
-                  {category !== 'No Category' && (
-                    <TouchButton
-                      onClick={() => setCategoryModal({ isOpen: true, mode: 'delete', category })}
-                      variant="danger"
-                      size="sm"
-                      className="p-2"
-                      isDark={isDarkMode}
-                      title={t.deleteCategory}
-                    >
-                      <Trash2 size={16} />
-                    </TouchButton>
-                  )}
+                  <TouchButton
+                    onClick={() => setCategoryModal({ isOpen: true, mode: 'delete', category })}
+                    variant="danger"
+                    size="sm"
+                    className="p-2"
+                    isDark={isDarkMode}
+                    title={t.deleteCategory}
+                  >
+                    <Trash2 size={16} />
+                  </TouchButton>
                 </div>
               </div>
             </div>
@@ -116,10 +146,14 @@ export const URLListSection = ({
                       onClick={() => toggleUrlSelection(url.id)}
                       variant="secondary"
                       size="sm"
-                      className={`p-2 ${selectedUrls.includes(url.id) ? 'bg-blue-500 text-white' : ''}`}
+                      className={`p-2 ${selectedUrls.includes(url.id) ? (isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white') : ''}`}
                       isDark={isDarkMode}
                     >
-                      {selectedUrls.includes(url.id) ? <Check size={16} /> : <div className="w-4 h-4 border-2 border-current rounded"></div>}
+                      {selectedUrls.includes(url.id) ? (
+                        <Check size={16} className="text-white" />
+                      ) : (
+                        <div className={`w-4 h-4 border-2 rounded ${isDarkMode ? 'border-gray-400' : 'border-gray-600'}`}></div>
+                      )}
                     </TouchButton>
 
                     {/* URL Info */}
@@ -127,69 +161,116 @@ export const URLListSection = ({
                       <h4 className={`font-semibold ${themeConfig.text} truncate`}>
                         {url.title}
                       </h4>
-                      <p className={`text-sm ${themeConfig.textSecondary} truncate`}>
-                        {url.url}
-                      </p>
+                      {editingUrl === url.id ? (
+                        <div className="flex gap-2 mt-2">
+                          <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className={`flex-1 p-2 border rounded ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') handleSaveEdit(url.id);
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            autoFocus
+                          />
+                          <TouchButton
+                            onClick={() => handleSaveEdit(url.id)}
+                            variant="success"
+                            size="sm"
+                            isDark={isDarkMode}
+                            title="Save"
+                          >
+                            <Save size={16} />
+                          </TouchButton>
+                          <TouchButton
+                            onClick={handleCancelEdit}
+                            variant="secondary"
+                            size="sm"
+                            isDark={isDarkMode}
+                            title="Cancel"
+                          >
+                            <X size={16} />
+                          </TouchButton>
+                        </div>
+                      ) : (
+                        <p className={`text-sm ${themeConfig.textSecondary} truncate`}>
+                          {url.url}
+                        </p>
+                      )}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-2">
-                      <TouchButton
-                        onClick={() => openShareModal(url.url, url.title, true)}
-                        variant="secondary"
-                        size="sm"
-                        className="p-2"
-                        isDark={isDarkMode}
-                        title={t.showQrCode}
-                      >
-                        <QrCode size={16} />
-                      </TouchButton>
+                    {editingUrl !== url.id && (
+                      <div className="flex items-center gap-2">
+                        <TouchButton
+                          onClick={() => handleEditUrl(url)}
+                          variant="secondary"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          title={t.editUrl}
+                        >
+                          <Edit3 size={16} />
+                        </TouchButton>
 
-                      <TouchButton
-                        onClick={() => window.open(url.url, '_blank')}
-                        variant="primary"
-                        size="sm"
-                        className="p-2"
-                        isDark={isDarkMode}
-                        isThaiMode={isThaiMode}
-                        title={t.openUrl}
-                      >
-                        <ExternalLink size={16} />
-                      </TouchButton>
+                        <TouchButton
+                          onClick={() => openShareModal(url.url, url.title, true)}
+                          variant="secondary"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          title={t.showQrCode}
+                        >
+                          <QrCode size={16} />
+                        </TouchButton>
 
-                      <TouchButton
-                        onClick={() => copyToClipboard(url.url)}
-                        variant="secondary"
-                        size="sm"
-                        className="p-2"
-                        isDark={isDarkMode}
-                        title={t.copyUrl}
-                      >
-                        <Copy size={16} />
-                      </TouchButton>
+                        <TouchButton
+                          onClick={() => window.open(url.url, '_blank')}
+                          variant="primary"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          isThaiMode={isThaiMode}
+                          title={t.openUrl}
+                        >
+                          <ExternalLink size={16} />
+                        </TouchButton>
 
-                      <TouchButton
-                        onClick={() => openShareModal(url.url, url.title, false)}
-                        variant="secondary"
-                        size="sm"
-                        className="p-2"
-                        isDark={isDarkMode}
-                        title={t.shareUrl}
-                      >
-                        <Share2 size={16} />
-                      </TouchButton>
+                        <TouchButton
+                          onClick={() => copyToClipboard(url.url)}
+                          variant="secondary"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          title={t.copyUrl}
+                        >
+                          <Copy size={16} />
+                        </TouchButton>
 
-                      <TouchButton
-                        onClick={() => handleDeleteUrl(url)}
-                        variant="danger"
-                        size="sm"
-                        className="p-2"
-                        isDark={isDarkMode}
-                        title={t.deleteUrl}
-                      >
-                        <Trash2 size={16} />
-                      </TouchButton>
-                    </div>
+                        <TouchButton
+                          onClick={() => openShareModal(url.url, url.title, false)}
+                          variant="secondary"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          title={t.shareUrl}
+                        >
+                          <Share2 size={16} />
+                        </TouchButton>
+
+                        <TouchButton
+                          onClick={() => handleDeleteUrl(url)}
+                          variant="danger"
+                          size="sm"
+                          className="p-2"
+                          isDark={isDarkMode}
+                          title={t.deleteUrl}
+                        >
+                          <Trash2 size={16} />
+                        </TouchButton>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
