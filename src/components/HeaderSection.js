@@ -37,7 +37,7 @@ export const HeaderSection = ({
                 {t.appTitle}
               </h1>
               <p className={`text-sm ${themeConfig.textSecondary}`}>
-                {t.appSubtitle}
+                {user ? `${t.signedInAs}: ${user.email}` : t.appSubtitle}
               </p>
             </div>
           </div>
@@ -52,6 +52,7 @@ export const HeaderSection = ({
                 size="sm"
                 isDark={isDarkMode}
                 className="flex items-center gap-2"
+                title={t.installApp}
               >
                 <Download size={16} />
                 {t.installApp}
@@ -61,7 +62,7 @@ export const HeaderSection = ({
             {/* Online/Offline Status */}
             <div 
               className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-              title={isOnline ? `${t.online} - Connected to internet` : `${t.offline} - Working without internet`}
+              title={isOnline ? `${t.online}` : `${t.offline}`}
             >
               {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
             </div>
@@ -70,7 +71,7 @@ export const HeaderSection = ({
             {user && (
               <div 
                 className={`px-3 py-1 rounded-lg ${isSyncing ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}
-                title={isSyncing ? "Syncing to cloud..." : "Cloud sync ready"}
+                title={isSyncing ? t.syncing : "Cloud sync ready"}
               >
                 {isSyncing ? <Database className="animate-pulse" size={16} /> : <Database size={16} />}
               </div>
@@ -83,7 +84,7 @@ export const HeaderSection = ({
               size="sm"
               className="p-2"
               isDark={isDarkMode}
-              title={t.toggleTheme}
+              title={isDarkMode ? t.light : t.dark}
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </TouchButton>
