@@ -9,6 +9,7 @@ import { usePerformanceMonitor, useOfflineStatus } from './hooks/useCustomHooks'
 import { LoadingSpinner, TouchButton, Toast } from './components/UI';
 import { ActionBar } from './components/ActionBar';
 import { CategoryModal } from './components/CategoryModal';
+import { QRCodeModal } from './components/QRCodeModal';
 
 function App() {
   // Core state
@@ -28,6 +29,13 @@ function App() {
     isOpen: false,
     mode: 'add', // 'add', 'edit', 'delete'
     category: ''
+  });
+  
+  // QR Code modal state
+  const [qrModal, setQrModal] = useState({
+    isOpen: false,
+    url: '',
+    title: ''
   });
   
   // Toast notifications
@@ -106,6 +114,16 @@ function App() {
   // Hide toast notification
   const hideToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
+  // Open QR Code modal
+  const openQRModal = (url, title) => {
+    setQrModal({ isOpen: true, url, title });
+  };
+
+  // Close QR Code modal
+  const closeQRModal = () => {
+    setQrModal({ isOpen: false, url: '', title: '' });
   };
 
   // Sign in function
@@ -347,12 +365,10 @@ function App() {
             {/* Controls */}
             <div className="flex items-center gap-2">
               {/* Online/Offline Status */}
-              <div className={`flex items-center gap-2 ${isOnline ? 'text-green-600' : 'text-red-600'} cursor-pointer`}
-                title={isOnline ? "Connected to internet" : "Offline - data saved locally"}
+              <div 
+                className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                title={isOnline ? "Online - Connected to internet" : "Offline - Working without internet"}
               >
-              {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
-              </div>
-              <div className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
               </div>
 
@@ -435,7 +451,7 @@ function App() {
                     ${isDarkMode 
                       ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
                       : isThaiMode 
-                      ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
+                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                       : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                     }
                   `}
@@ -489,7 +505,7 @@ function App() {
                     ${isDarkMode 
                       ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
                       : isThaiMode 
-                      ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
+                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                       : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                     }
                   `}
@@ -528,7 +544,7 @@ function App() {
                     ${isDarkMode 
                       ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
                       : isThaiMode 
-                      ? 'border-orange-200/50 focus:ring-orange-500/30 bg-white/60 text-orange-900 placeholder-orange-500/60'
+                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                       : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
                     }
                   `}
@@ -673,6 +689,17 @@ function App() {
                           {/* Action Buttons */}
                           <div className="flex items-center gap-2">
                             <TouchButton
+                              onClick={() => openQRModal(url.url, url.title)}
+                              variant="secondary"
+                              size="sm"
+                              className="p-2"
+                              isDark={isDarkMode}
+                              title="Show QR Code"
+                            >
+                              <QrCode size={16} />
+                            </TouchButton>
+
+                            <TouchButton
                               onClick={() => window.open(url.url, '_blank')}
                               variant="primary"
                               size="sm"
@@ -763,7 +790,7 @@ function App() {
         )}
       </main>
 
-      {/* Action Bar - This is the key component that was missing! */}
+      {/* Action Bar - Fixed bottom bar for bulk actions */}
       <ActionBar
         selectedUrls={selectedUrls}
         urls={urls}
@@ -795,6 +822,17 @@ function App() {
         t={t}
         isDark={isDarkMode}
         isThaiMode={isThaiMode}
+        themeConfig={themeConfig}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={qrModal.isOpen}
+        onClose={closeQRModal}
+        url={qrModal.url}
+        title={qrModal.title}
+        t={t}
+        isDark={isDarkMode}
         themeConfig={themeConfig}
       />
     </div>
