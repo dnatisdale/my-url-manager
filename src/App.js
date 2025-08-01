@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check, Download } from 'lucide-react';
+import { Search, Share2, Trash2, QrCode, X, LogIn, Save, Edit3, Copy, ExternalLink, Database, BarChart3, FolderPlus, Tag, Check } from 'lucide-react';
 
 // Import our modularized components and utilities
 import { translations } from './constants/translations';
@@ -12,6 +12,10 @@ import { CategoryModal } from './components/CategoryModal';
 import { ShareModal } from './components/ShareModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { BackupExportModal } from './components/BackupExportModal';
+import { HeaderSection } from './components/HeaderSection';
+import { SignInSection } from './components/SignInSection';
+import { URLInputSection } from './components/URLInputSection';
+import { URLListSection } from './components/URLListSection';
 import { firebaseSync } from './services/firebaseSync';
 
 function App() {
@@ -497,206 +501,50 @@ function App() {
         onClose={hideToast}
       />
 
-      <header className={`sticky top-0 z-30 ${themeConfig.headerBg} border-b ${themeConfig.cardBorder} backdrop-blur-xl`}>
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                <Sparkles className="text-white" size={20} />
-              </div>
-              <div>
-                <h1 className={`text-xl font-bold ${themeConfig.text}`}>
-                  {t.appTitle}
-                </h1>
-                <p className={`text-sm ${themeConfig.textSecondary}`}>
-                  {t.appSubtitle}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {showInstallButton && (
-                <TouchButton
-                  onClick={handleInstallPWA}
-                  variant="success"
-                  size="sm"
-                  isDark={isDarkMode}
-                  className="flex items-center gap-2"
-                >
-                  <Download size={16} />
-                  {t.installApp}
-                </TouchButton>
-              )}
-
-              <div 
-                className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                title={isOnline ? `${t.online} - Connected to internet` : `${t.offline} - Working without internet`}
-              >
-                {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
-              </div>
-
-              {user && (
-                <div 
-                  className={`px-3 py-1 rounded-lg ${isSyncing ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}
-                  title={isSyncing ? "Syncing to cloud..." : "Cloud sync ready"}
-                >
-                  {isSyncing ? <Database className="animate-pulse" size={16} /> : <Database size={16} />}
-                </div>
-              )}
-
-              <TouchButton
-                onClick={toggleTheme}
-                variant="secondary"
-                size="sm"
-                className="p-2"
-                isDark={isDarkMode}
-                title={t.toggleTheme}
-              >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </TouchButton>
-
-              <TouchButton
-                onClick={toggleLanguage}
-                variant="secondary"
-                size="sm"
-                className="p-2"
-                isDark={isDarkMode}
-                title={t.toggleLanguage}
-              >
-                <Globe size={18} />
-              </TouchButton>
-
-              {user ? (
-                <TouchButton
-                  onClick={handleSignOut}
-                  variant="secondary"
-                  size="sm"
-                  isDark={isDarkMode}
-                >
-                  <LogOut size={16} />
-                  {t.signOut}
-                </TouchButton>
-              ) : (
-                <TouchButton
-                  onClick={() => {}}
-                  variant="primary"
-                  size="sm"
-                  isDark={isDarkMode}
-                  isThaiMode={isThaiMode}
-                >
-                  <LogIn size={16} />
-                  {t.signIn}
-                </TouchButton>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* REPLACED: Header is now a separate component */}
+      <HeaderSection
+        t={t}
+        themeConfig={themeConfig}
+        isDarkMode={isDarkMode}
+        isThaiMode={isThaiMode}
+        toggleTheme={toggleTheme}
+        toggleLanguage={toggleLanguage}
+        user={user}
+        handleSignOut={handleSignOut}
+        showInstallButton={showInstallButton}
+        handleInstallPWA={handleInstallPWA}
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+      />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* REPLACED: Sign-in form is now a separate component */}
         {!user && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
-            <div className="text-center space-y-4">
-              <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                <LogIn className="text-white" size={24} />
-              </div>
-              <h2 className={`text-2xl font-bold ${themeConfig.text}`}>
-                {t.signInRequired}
-              </h2>
-              <p className={`${themeConfig.textSecondary}`}>
-                {t.signInMessage}
-              </p>
-              
-              <div className="max-w-md mx-auto space-y-4">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyPress={handleEmailKeyPress}
-                  placeholder={t.emailPlaceholder}
-                  className={`
-                    w-full p-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                    transition-all duration-300 font-medium
-                    ${isDarkMode 
-                      ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-                      : isThaiMode 
-                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                      : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                    }
-                  `}
-                />
-                <TouchButton
-                  onClick={handleSignIn}
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  isDark={isDarkMode}
-                  isThaiMode={isThaiMode}
-                  loading={isSigningIn}
-                  disabled={!email.trim()}
-                >
-                  <LogIn size={20} />
-                  {t.signIn}
-                </TouchButton>
-              </div>
-            </div>
-          </div>
+          <SignInSection
+            t={t}
+            themeConfig={themeConfig}
+            isDarkMode={isDarkMode}
+            isThaiMode={isThaiMode}
+            email={email}
+            setEmail={setEmail}
+            isSigningIn={isSigningIn}
+            handleSignIn={handleSignIn}
+            handleEmailKeyPress={handleEmailKeyPress}
+          />
         )}
 
+        {/* REPLACED: URL input form is now a separate component */}
         {user && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                  <Save className="text-white" size={20} />
-                </div>
-                <div>
-                  <h3 className={`text-lg font-semibold ${themeConfig.text}`}>
-                    {t.addUrl}
-                  </h3>
-                  <p className={`text-sm ${themeConfig.textSecondary}`}>
-                    {isThaiMode ? t.savedLocally : t.syncedToCloud}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeConfig.textSecondary} opacity-60 font-medium`}>
-                    https://
-                  </span>
-                  <input
-                    type="text"
-                    value={currentUrl}
-                    onChange={(e) => setCurrentUrl(e.target.value)}
-                    onKeyPress={handleUrlKeyPress}
-                    placeholder="example.com"
-                    className={`
-                      w-full pl-20 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                      transition-all duration-300 font-medium
-                      ${isDarkMode 
-                        ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-                        : isThaiMode 
-                        ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                        : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                      }
-                    `}
-                  />
-                </div>
-                <TouchButton
-                  onClick={addUrl}
-                  variant="primary"
-                  size="md"
-                  isDark={isDarkMode}
-                  isThaiMode={isThaiMode}
-                  disabled={!currentUrl.trim()}
-                >
-                  <Save size={20} />
-                  {t.add}
-                </TouchButton>
-              </div>
-            </div>
-          </div>
+          <URLInputSection
+            t={t}
+            themeConfig={themeConfig}
+            isDarkMode={isDarkMode}
+            isThaiMode={isThaiMode}
+            currentUrl={currentUrl}
+            setCurrentUrl={setCurrentUrl}
+            addUrl={addUrl}
+            handleUrlKeyPress={handleUrlKeyPress}
+          />
         )}
 
         {user && urls.length > 0 && (
@@ -757,172 +605,23 @@ function App() {
           </div>
         )}
 
+        {/* REPLACED: URL list display is now a separate component */}
         {user && (
-          <div className="space-y-4">
-            {Object.keys(groupedUrls).length === 0 ? (
-              <div className={`${themeConfig.cardBg} rounded-3xl p-12 border ${themeConfig.cardBorder} text-center`}>
-                <div className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center mb-6`}>
-                  <Database className="text-white" size={32} />
-                </div>
-                <h3 className={`text-2xl font-bold ${themeConfig.text} mb-4`}>
-                  {t.noUrlsYet}
-                </h3>
-                <p className={`${themeConfig.textSecondary} mb-6`}>
-                  {t.noUrlsMessage}
-                </p>
-                <TouchButton
-                  onClick={() => {}}
-                  variant="primary"
-                  size="lg"
-                  isDark={isDarkMode}
-                  isThaiMode={isThaiMode}
-                >
-                  <Save size={20} />
-                  {t.addFirstUrl}
-                </TouchButton>
-              </div>
-            ) : (
-              Object.entries(groupedUrls).map(([category, categoryUrls]) => (
-                <div key={category} className={`${themeConfig.cardBg} rounded-3xl border ${themeConfig.cardBorder} overflow-hidden`}>
-                  <div className="p-6 border-b border-gray-200/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                          <Tag className="text-white" size={16} />
-                        </div>
-                        <h3 className={`text-lg font-semibold ${themeConfig.text}`}>
-                          {category}
-                        </h3>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-gray-700/60 text-gray-300' : 'bg-gray-100/80 text-gray-600'}`}>
-                          {categoryUrls.length} {t.urls}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <TouchButton
-                          onClick={() => setCategoryModal({ isOpen: true, mode: 'edit', category })}
-                          variant="secondary"
-                          size="sm"
-                          className="p-2"
-                          isDark={isDarkMode}
-                          title={t.editCategory}
-                        >
-                          <Edit3 size={16} />
-                        </TouchButton>
-                        
-                        {category !== 'No Category' && (
-                          <TouchButton
-                            onClick={() => setCategoryModal({ isOpen: true, mode: 'delete', category })}
-                            variant="danger"
-                            size="sm"
-                            className="p-2"
-                            isDark={isDarkMode}
-                            title={t.deleteCategory}
-                          >
-                            <Trash2 size={16} />
-                          </TouchButton>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="divide-y divide-gray-200/20">
-                    {categoryUrls.map((url) => (
-                      <div key={url.id} className="p-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
-                        <div className="flex items-center gap-4">
-                          <TouchButton
-                            onClick={() => toggleUrlSelection(url.id)}
-                            variant="secondary"
-                            size="sm"
-                            className={`p-2 ${selectedUrls.includes(url.id) ? 'bg-blue-500 text-white' : ''}`}
-                            isDark={isDarkMode}
-                          >
-                            {selectedUrls.includes(url.id) ? <Check size={16} /> : <div className="w-4 h-4 border-2 border-current rounded"></div>}
-                          </TouchButton>
-
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-semibold ${themeConfig.text} truncate`}>
-                              {url.title}
-                            </h4>
-                            <p className={`text-sm ${themeConfig.textSecondary} truncate`}>
-                              {url.url}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <TouchButton
-                              onClick={() => openShareModal(url.url, url.title, true)}
-                              variant="secondary"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                              title={t.showQrCode}
-                            >
-                              <QrCode size={16} />
-                            </TouchButton>
-
-                            <TouchButton
-                              onClick={() => window.open(url.url, '_blank')}
-                              variant="primary"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                              isThaiMode={isThaiMode}
-                              title={t.openUrl}
-                            >
-                              <ExternalLink size={16} />
-                            </TouchButton>
-
-                            <TouchButton
-                              onClick={() => copyToClipboard(url.url)}
-                              variant="secondary"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                              title={t.copyUrl}
-                            >
-                              <Copy size={16} />
-                            </TouchButton>
-
-                            <TouchButton
-                              onClick={() => openShareModal(url.url, url.title, false)}
-                              variant="secondary"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                              title={t.shareUrl}
-                            >
-                              <Share2 size={16} />
-                            </TouchButton>
-
-                            <TouchButton
-                              onClick={() => {
-                                openConfirmModal(
-                                  'Delete URL',
-                                  `Are you sure you want to delete "${url.title}"? This action cannot be undone.`,
-                                  () => {
-                                    setUrls(prev => prev.filter(u => u.id !== url.id));
-                                    showToast('URL deleted', 'success');
-                                  }
-                                );
-                              }}
-                              variant="danger"
-                              size="sm"
-                              className="p-2"
-                              isDark={isDarkMode}
-                              title={t.deleteUrl}
-                            >
-                              <Trash2 size={16} />
-                            </TouchButton>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <URLListSection
+            groupedUrls={groupedUrls}
+            selectedUrls={selectedUrls}
+            t={t}
+            themeConfig={themeConfig}
+            isDarkMode={isDarkMode}
+            isThaiMode={isThaiMode}
+            toggleUrlSelection={toggleUrlSelection}
+            openShareModal={openShareModal}
+            copyToClipboard={copyToClipboard}
+            openConfirmModal={openConfirmModal}
+            setUrls={setUrls}
+            showToast={showToast}
+            setCategoryModal={setCategoryModal}
+          />
         )}
 
         {user && urls.length > 0 && (
