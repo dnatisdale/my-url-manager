@@ -8,10 +8,12 @@ export const translations = {
     signOut: "ออกจากระบบ",
     email: "อีเมล (ใช้เป็น ID บัญชี)",
     emailPlaceholder: "your@email.com",
-    signInMessage: "กรุณาเข้าสู่ระบบเพื่อบันทึกลิงก์และซิงค์ข้อมูลระหว่างอุปกรณ์",
-    syncedToCloud: "ซิงค์กับคลาวด์: ข้อมูลของคุณบันทึกและซิงค์อัตโนมัติในทุกอุปกรณ์",
+    signInMessage: "กรุณาเข้าสู่ระบบเพื่อซิงค์ข้อมูลระหว่างอุปกรณ์ต่างๆ",
+    syncedToCloud: "ซิงค์กับคลาวด์และบันทึกในอุปกรณ์นี้",
+    savedLocally: "บันทึกในอุปกรณ์นี้และซิงค์กับคลาวด์",
     enterUrl: "ป้อนลิงก์และกด Enter...",
     addUrl: "เพิ่มลิงก์",
+    add: "เพิ่ม",
     searchPlaceholder: "ค้นหาลิงก์และหมวดหมู่...",
     noUrlsYet: "ยังไม่มีลิงก์",
     noUrlsMessage: "เพิ่มลิงก์เพื่อเริ่มต้น!",
@@ -80,7 +82,13 @@ export const translations = {
     importData: "นำเข้าข้อมูล",
     optimizing: "กำลังเพิ่มประสิทธิภาพ...",
     performanceMode: "โหมดประสิทธิภาพ",
-    standardMode: "โหมดมาตรฐาน"
+    standardMode: "โหมดมาตรฐาน",
+    installApp: "ติดตั้งแอป",
+    invalidUrl: "ลิงก์ไม่ถูกต้อง",
+    pleaseEnterValidUrl: "กรุณาใส่ลิงก์ที่ถูกต้อง",
+    syncing: "กำลังซิงค์...",
+    syncComplete: "ซิงค์เสร็จแล้ว",
+    syncFailed: "ซิงค์ล้มเหลว"
   },
   en: {
     appTitle: "Good News: URL Vault",
@@ -91,10 +99,12 @@ export const translations = {
     signOut: "Sign Out",
     email: "Email (used as your account ID)",
     emailPlaceholder: "your@email.com",
-    signInMessage: "Please sign in to save your URLs and sync across devices",
-    syncedToCloud: "Synced to Cloud: Your data automatically saves and syncs across all your devices",
+    signInMessage: "Please sign in to sync your URLs across all your devices",
+    syncedToCloud: "Synced to cloud and saved on this device",
+    savedLocally: "Saved on this device and synced to cloud",
     enterUrl: "Enter URL and press Enter...",
     addUrl: "Add URL",
+    add: "Add",
     searchPlaceholder: "Search URLs and categories...",
     noUrlsYet: "No URLs added yet",
     noUrlsMessage: "Add some URLs to get started!",
@@ -163,6 +173,12 @@ export const translations = {
     importData: "Import Data",
     optimizing: "Optimizing...",
     performanceMode: "Performance Mode",
-    standardMode: "Standard Mode"
+    standardMode: "Standard Mode",
+    installApp: "Install App",
+    invalidUrl: "Invalid URL",
+    pleaseEnterValidUrl: "Please enter a valid URL",
+    syncing: "Syncing...",
+    syncComplete: "Sync complete",
+    syncFailed: "Sync failed"
   }
 };

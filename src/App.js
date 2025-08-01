@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check } from 'lucide-react';
+import { Search, Share2, Trash2, QrCode, X, LogIn, LogOut, Save, Sparkles, Globe, Moon, Sun, Edit3, Copy, ExternalLink, Database, Wifi, WifiOff, BarChart3, FolderPlus, Tag, Check, Download, AlertTriangle } from 'lucide-react';
 
 // Import our modularized components and utilities
 import { translations } from './constants/translations';
@@ -12,6 +12,7 @@ import { CategoryModal } from './components/CategoryModal';
 import { ShareModal } from './components/ShareModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { BackupExportModal } from './components/BackupExportModal';
+import { firebaseSync } from './services/firebaseSync';
 
 function App() {
   // Core state
@@ -26,6 +27,11 @@ function App() {
   const [email, setEmail] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // PWA Install
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
   
   // Modal states
   const [categoryModal, setCategoryModal] = useState({
@@ -70,16 +76,64 @@ function App() {
   const themeKey = isDarkMode ? (isThaiMode ? 'thaiDark' : 'dark') : (isThaiMode ? 'thai' : 'light');
   const themeConfig = themes[themeKey];
 
+  // PWA Install Prompt Detection
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallButton(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // Handle PWA Install
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      showToast('App installed successfully!', 'success');
+    }
+    
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
+  };
+
   // Load data on component mount
   useEffect(() => {
     loadData();
     updateMemoryUsage();
+    
+    // Load remembered email
+    const savedEmail = localStorage.getItem('goodNewsRememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
   }, [updateMemoryUsage]);
 
   // Update performance metrics when URLs change
   useEffect(() => {
     updateDataMetrics(urls);
   }, [urls, updateDataMetrics]);
+
+  // Auto-sync when user changes and online
+  useEffect(() => {
+    if (user && isOnline && urls.length > 0) {
+      syncToCloud();
+    }
+  }, [user, isOnline]);
 
   // Load data from localStorage
   const loadData = () => {
@@ -101,19 +155,59 @@ function App() {
     }
   };
 
-  // Save data to localStorage
-  const saveData = useCallback(() => {
+  // Save data to localStorage and sync to cloud
+  const saveData = useCallback(async () => {
     try {
       localStorage.setItem('goodNewsUrls', JSON.stringify(urls));
       localStorage.setItem('goodNewsCategories', JSON.stringify(categories));
       localStorage.setItem('goodNewsUser', JSON.stringify(user));
       localStorage.setItem('goodNewsTheme', isDarkMode ? 'dark' : 'light');
       localStorage.setItem('goodNewsLanguage', isThaiMode ? 'th' : 'en');
+      
+      // Sync to cloud if user is signed in and online
+      if (user && isOnline && urls.length > 0) {
+        await syncToCloud();
+      }
     } catch (error) {
       console.error('Error saving data:', error);
       showToast('Error saving data', 'error');
     }
-  }, [urls, categories, user, isDarkMode, isThaiMode]);
+  }, [urls, categories, user, isDarkMode, isThaiMode, isOnline]);
+
+  // Cloud sync function
+  const syncToCloud = async () => {
+    if (!user || isSyncing) return;
+    
+    setIsSyncing(true);
+    const syncData = { urls, categories };
+    const result = await firebaseSync.syncToCloud(user.email, syncData);
+    
+    if (result.success) {
+      showToast(t.syncComplete, 'success');
+    } else {
+      showToast(t.syncFailed, 'warning');
+    }
+    
+    setIsSyncing(false);
+  };
+
+  // Load from cloud on sign in
+  const loadFromCloud = async (userEmail) => {
+    setIsSyncing(true);
+    const result = await firebaseSync.fetchFromCloud(userEmail);
+    
+    if (result.success && result.data) {
+      setUrls(result.data.urls || []);
+      setCategories(result.data.categories || ['No Category', 'Save for Later', 'Thailand']);
+      showToast('Data loaded from cloud', 'success');
+    } else if (result.success && !result.data) {
+      showToast('No cloud data found - first time login', 'info');
+    } else {
+      showToast('Failed to load cloud data', 'error');
+    }
+    
+    setIsSyncing(false);
+  };
 
   // Auto-save when data changes
   useEffect(() => {
@@ -130,6 +224,23 @@ function App() {
   // Hide toast notification
   const hideToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
+  // URL validation function
+  const isValidUrl = (string) => {
+    try {
+      // Allow common domains without protocol
+      if (string.includes('.') && !string.includes(' ') && string.length > 3) {
+        // Test with https:// prefix
+        new URL('https://' + string);
+        return true;
+      }
+      // Test as-is if it has protocol
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
   };
 
   // Open Share modal
@@ -164,6 +275,9 @@ function App() {
     
     setIsSigningIn(true);
     
+    // Remember email
+    localStorage.setItem('goodNewsRememberedEmail', email.trim());
+    
     // Simulate sign-in process
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -173,6 +287,10 @@ function App() {
     };
     
     setUser(newUser);
+    
+    // Load data from cloud
+    await loadFromCloud(email.trim());
+    
     setEmail('');
     setIsSigningIn(false);
     showToast(t.welcomeBack, 'success');
@@ -185,11 +303,18 @@ function App() {
     showToast('Signed out successfully', 'info');
   };
 
-  // Add URL function
+  // Add URL function with validation
   const addUrl = () => {
     if (!currentUrl.trim()) return;
     
     let url = currentUrl.trim();
+    
+    // Validate URL
+    if (!isValidUrl(url)) {
+      showToast(t.invalidUrl + ': ' + t.pleaseEnterValidUrl, 'error');
+      return;
+    }
+    
     // Auto-add https:// if no protocol
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
@@ -411,6 +536,20 @@ function App() {
 
             {/* Controls */}
             <div className="flex items-center gap-2">
+              {/* PWA Install Button */}
+              {showInstallButton && (
+                <TouchButton
+                  onClick={handleInstallPWA}
+                  variant="success"
+                  size="sm"
+                  isDark={isDarkMode}
+                  className="flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  {t.installApp}
+                </TouchButton>
+              )}
+
               {/* Online/Offline Status */}
               <div 
                 className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
@@ -418,6 +557,16 @@ function App() {
               >
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
               </div>
+
+              {/* Sync Status */}
+              {user && (
+                <div 
+                  className={`px-3 py-1 rounded-lg ${isSyncing ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}
+                  title={isSyncing ? "Syncing to cloud..." : "Cloud sync ready"}
+                >
+                  {isSyncing ? <Database className="animate-pulse" size={16} /> : <Database size={16} />}
+                </div>
+              )}
 
               {/* Theme Toggle */}
               <TouchButton
@@ -454,7 +603,7 @@ function App() {
                 </TouchButton>
               ) : (
                 <TouchButton
-                  onClick={() => {/* Open sign in modal */}}
+                  onClick={() => {/* Sign in handled by form below */}}
                   variant="primary"
                   size="sm"
                   isDark={isDarkMode}
@@ -534,7 +683,7 @@ function App() {
                     {t.addUrl}
                   </h3>
                   <p className={`text-sm ${themeConfig.textSecondary}`}>
-                    Saved locally in browser storage (not synced to cloud)
+                    {isThaiMode ? t.savedLocally : t.syncedToCloud}
                   </p>
                 </div>
               </div>
@@ -571,7 +720,7 @@ function App() {
                   disabled={!currentUrl.trim()}
                 >
                   <Save size={20} />
-                  {t.addUrl}
+                  {t.add}
                 </TouchButton>
               </div>
             </div>
