@@ -11,6 +11,7 @@ import { ActionBar } from './components/ActionBar';
 import { CategoryModal } from './components/CategoryModal';
 import { ShareModal } from './components/ShareModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
+import { BackupExportModal } from './components/BackupExportModal';
 
 function App() {
   // Core state
@@ -49,6 +50,9 @@ function App() {
     onConfirm: null,
     type: 'danger'
   });
+
+  // Backup/Export modal state
+  const [backupModal, setBackupModal] = useState(false);
   
   // Toast notifications
   const [toast, setToast] = useState({
@@ -146,6 +150,12 @@ function App() {
   // Close confirmation modal
   const closeConfirmModal = () => {
     setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, type: 'danger' });
+  };
+
+  // Handle import
+  const handleImport = (importedUrls, importedCategories) => {
+    setUrls(importedUrls);
+    setCategories(importedCategories);
   };
 
   // Sign in function
@@ -524,7 +534,7 @@ function App() {
                     {t.addUrl}
                   </h3>
                   <p className={`text-sm ${themeConfig.textSecondary}`}>
-                    Saved locally on your device
+                    Saved locally in browser storage (not synced to cloud)
                   </p>
                 </div>
               </div>
@@ -797,9 +807,9 @@ function App() {
           </div>
         )}
 
-        {/* Analytics Button */}
+        {/* Analytics & Backup Buttons */}
         {user && urls.length > 0 && (
-          <div className="text-center">
+          <div className="flex justify-center gap-3">
             <TouchButton
               onClick={() => setShowAnalytics(!showAnalytics)}
               variant="secondary"
@@ -809,6 +819,18 @@ function App() {
             >
               <BarChart3 size={20} />
               {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+            </TouchButton>
+            
+            <TouchButton
+              onClick={() => setBackupModal(true)}
+              variant="primary"
+              size="md"
+              isDark={isDarkMode}
+              isThaiMode={isThaiMode}
+              className="flex items-center gap-2"
+            >
+              <Database size={20} />
+              Backup & Export
             </TouchButton>
           </div>
         )}
@@ -892,6 +914,20 @@ function App() {
         url={shareModal.url}
         title={shareModal.title}
         showQR={shareModal.showQR}
+        t={t}
+        isDark={isDarkMode}
+        themeConfig={themeConfig}
+        onShowToast={showToast}
+      />
+
+      {/* Backup/Export Modal */}
+      <BackupExportModal
+        isOpen={backupModal}
+        onClose={() => setBackupModal(false)}
+        urls={urls}
+        categories={categories}
+        user={user}
+        onImport={handleImport}
         t={t}
         isDark={isDarkMode}
         themeConfig={themeConfig}
