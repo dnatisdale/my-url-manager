@@ -347,6 +347,11 @@ function App() {
             {/* Controls */}
             <div className="flex items-center gap-2">
               {/* Online/Offline Status */}
+              <div className={`flex items-center gap-2 ${isOnline ? 'text-green-600' : 'text-red-600'} cursor-pointer`}
+                title={isOnline ? "Connected to internet" : "Offline - data saved locally"}
+              >
+              {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
+              </div>
               <div className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
               </div>
