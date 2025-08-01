@@ -4,7 +4,7 @@
 class FirebaseSyncService {
   constructor() {
     this.isOnline = navigator.onLine;
-    this.syncQueue = [];
+    this.syncQueue = JSON.parse(localStorage.getItem('syncQueue') || '[]');
     this.lastSync = localStorage.getItem('lastSync') || null;
     
     // Listen for online/offline events

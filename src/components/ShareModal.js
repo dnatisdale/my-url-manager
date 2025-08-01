@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Share2, Copy, Mail, MessageCircle, Download, QrCode } from 'lucide-react';
+import { X, Share2, Copy, Mail, MessageCircle, Download } from 'lucide-react';
 import { TouchButton } from './UI';
 
 export const ShareModal = ({
@@ -96,7 +96,7 @@ export const ShareModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className={`${themeConfig.cardBg} p-6 rounded-3xl max-w-md w-full shadow-2xl border ${themeConfig.cardBorder}`}>
+      <div className={`${themeConfig.cardBg} p-6 rounded-3xl max-w-md w-full border ${themeConfig.cardBorder}`}>
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-xl font-bold ${themeConfig.text}`}>
@@ -110,7 +110,7 @@ export const ShareModal = ({
         {/* QR Code Display (if showing QR) */}
         {showQR && (
           <div className="text-center mb-6">
-            <div className="inline-block p-[10px] bg-white rounded-2xl shadow-lg">
+            <div className="inline-block p-[10px] bg-white rounded-2xl">
               <img 
                 src={qrUrl} 
                 alt={`QR Code for ${title}`}
@@ -131,9 +131,9 @@ export const ShareModal = ({
           </p>
         </div>
 
-        {/* Share Options */}
+        {/* Main Action Buttons */}
         <div className="space-y-4">
-          {/* Quick Actions */}
+          {/* Primary Actions */}
           <div className="grid grid-cols-2 gap-3">
             <TouchButton
               onClick={() => handleShare('clipboard')}
@@ -146,7 +146,7 @@ export const ShareModal = ({
               Copy URL
             </TouchButton>
             
-            {showQR && (
+            {showQR ? (
               <TouchButton
                 onClick={downloadQR}
                 variant="primary"
@@ -157,25 +157,25 @@ export const ShareModal = ({
                 <Download size={16} />
                 Download QR
               </TouchButton>
-            )}
-            
-            {!showQR && navigator.share && (
-              <TouchButton
-                onClick={() => handleShare('native')}
-                variant="primary"
-                size="md"
-                isDark={isDark}
-                className="flex items-center gap-2"
-              >
-                <Share2 size={16} />
-                Share
-              </TouchButton>
+            ) : (
+              navigator.share && (
+                <TouchButton
+                  onClick={() => handleShare('native')}
+                  variant="primary"
+                  size="md"
+                  isDark={isDark}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 size={16} />
+                  Share
+                </TouchButton>
+              )
             )}
           </div>
 
-          {/* Platform-specific sharing */}
+          {/* Share Via Apps */}
           <div className="space-y-3">
-            <p className={`text-sm font-medium ${themeConfig.textSecondary}`}>
+            <p className={`text-sm font-medium ${themeConfig.textSecondary} text-center`}>
               Share via:
             </p>
             
@@ -224,20 +224,6 @@ export const ShareModal = ({
                 Email
               </TouchButton>
             </div>
-
-            {/* QR-specific options */}
-            {showQR && (
-              <TouchButton
-                onClick={() => handleShare('clipboard-qr')}
-                variant="secondary"
-                size="sm"
-                isDark={isDark}
-                className="w-full flex items-center gap-2"
-              >
-                <Copy size={16} />
-                Copy QR to Clipboard
-              </TouchButton>
-            )}
           </div>
         </div>
       </div>

@@ -66,6 +66,8 @@ export const translations = {
     analytics: "การวิเคราะห์",
     offlineMode: "โหมดออฟไลน์",
     onlineMode: "โหมดออนไลน์",
+    offline: "ออฟไลน์",
+    online: "ออนไลน์",
     dataSize: "ขนาดข้อมูล",
     totalUrls: "จำนวนลิงก์ทั้งหมด",
     workingUrls: "ลิงก์ใช้งานได้",
@@ -88,7 +90,17 @@ export const translations = {
     pleaseEnterValidUrl: "กรุณาใส่ลิงก์ที่ถูกต้อง",
     syncing: "กำลังซิงค์...",
     syncComplete: "ซิงค์เสร็จแล้ว",
-    syncFailed: "ซิงค์ล้มเหลว"
+    syncFailed: "ซิงค์ล้มเหลว",
+    // Tooltips for icon buttons
+    showQrCode: "แสดงคิวอาร์โค้ด",
+    openUrl: "เปิดลิงก์",
+    copyUrl: "คัดลอกลิงก์",
+    shareUrl: "แชร์ลิงก์",
+    deleteUrl: "ลบลิงก์",
+    editCategory: "แก้ไขหมวดหมู่",
+    deleteCategory: "ลบหมวดหมู่",
+    toggleTheme: "เปลี่ยนธีม",
+    toggleLanguage: "เปลี่ยนภาษา"
   },
   en: {
     appTitle: "Good News: URL Vault",
@@ -157,6 +169,8 @@ export const translations = {
     analytics: "Analytics",
     offlineMode: "Offline Mode",
     onlineMode: "Online Mode",
+    offline: "Offline",
+    online: "Online",
     dataSize: "Data Size",
     totalUrls: "Total URLs",
     workingUrls: "Working URLs",
@@ -179,6 +193,16 @@ export const translations = {
     pleaseEnterValidUrl: "Please enter a valid URL",
     syncing: "Syncing...",
     syncComplete: "Sync complete",
-    syncFailed: "Sync failed"
+    syncFailed: "Sync failed",
+    // Tooltips for icon buttons
+    showQrCode: "Show QR Code",
+    openUrl: "Open URL",
+    copyUrl: "Copy URL",
+    shareUrl: "Share URL",
+    deleteUrl: "Delete URL",
+    editCategory: "Edit Category",
+    deleteCategory: "Delete Category",
+    toggleTheme: "Toggle Theme",
+    toggleLanguage: "Toggle Language"
   }
 };

@@ -7,7 +7,7 @@ export const themes = {
     textSecondary: 'text-gray-600',
     accent: 'from-blue-500 to-indigo-600',
     headerBg: 'bg-white/70 backdrop-blur-xl',
-    shadowColor: 'shadow-blue-500/10'
+    shadowColor: ''
   },
   dark: {
     bg: 'from-gray-900 via-slate-900 to-purple-900',
@@ -17,7 +17,7 @@ export const themes = {
     textSecondary: 'text-gray-300',
     accent: 'from-purple-500 to-pink-600',
     headerBg: 'bg-gray-900/70 backdrop-blur-xl',
-    shadowColor: 'shadow-purple-500/20'
+    shadowColor: ''
   },
   thai: {
     bg: 'from-blue-50 via-white to-indigo-50',
@@ -27,7 +27,7 @@ export const themes = {
     textSecondary: 'text-gray-600',
     accent: 'from-blue-500 to-indigo-600',
     headerBg: 'bg-white/70 backdrop-blur-xl',
-    shadowColor: 'shadow-blue-500/10'
+    shadowColor: ''
   },
   thaiDark: {
     bg: 'from-gray-900 via-slate-900 to-purple-900',
@@ -37,6 +37,6 @@ export const themes = {
     textSecondary: 'text-gray-300',
     accent: 'from-purple-500 to-pink-600',
     headerBg: 'bg-gray-900/70 backdrop-blur-xl',
-    shadowColor: 'shadow-purple-500/20'
+    shadowColor: ''
   }
 };

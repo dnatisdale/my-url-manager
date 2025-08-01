@@ -553,7 +553,7 @@ function App() {
               {/* Online/Offline Status */}
               <div 
                 className={`px-3 py-1 rounded-lg ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                title={isOnline ? "Online - Connected to internet" : "Offline - Working without internet"}
+                title={isOnline ? `${t.online} - Connected to internet` : `${t.offline} - Working without internet`}
               >
                 {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
               </div>
@@ -575,6 +575,7 @@ function App() {
                 size="sm"
                 className="p-2"
                 isDark={isDarkMode}
+                title={t.toggleTheme}
               >
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </TouchButton>
@@ -586,6 +587,7 @@ function App() {
                 size="sm"
                 className="p-2"
                 isDark={isDarkMode}
+                title={t.toggleLanguage}
               >
                 <Globe size={18} />
               </TouchButton>
@@ -672,7 +674,7 @@ function App() {
 
         {/* URL Input Section - Only show if signed in */}
         {user && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
@@ -729,7 +731,7 @@ function App() {
 
         {/* Search and Controls */}
         {user && urls.length > 0 && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
             <div className="space-y-4">
               {/* Search Bar */}
               <div className="relative">
@@ -792,7 +794,7 @@ function App() {
         {user && (
           <div className="space-y-4">
             {Object.keys(groupedUrls).length === 0 ? (
-              <div className={`${themeConfig.cardBg} rounded-3xl p-12 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor} text-center`}>
+              <div className={`${themeConfig.cardBg} rounded-3xl p-12 border ${themeConfig.cardBorder} ${themeConfig.shadowColor} text-center`}>
                 <div className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center mb-6`}>
                   <Database className="text-white" size={32} />
                 </div>
@@ -815,7 +817,7 @@ function App() {
               </div>
             ) : (
               Object.entries(groupedUrls).map(([category, categoryUrls]) => (
-                <div key={category} className={`${themeConfig.cardBg} rounded-3xl border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor} overflow-hidden`}>
+                <div key={category} className={`${themeConfig.cardBg} rounded-3xl border ${themeConfig.cardBorder} ${themeConfig.shadowColor} overflow-hidden`}>
                   {/* Category Header */}
                   <div className="p-6 border-b border-gray-200/20">
                     <div className="flex items-center justify-between">
@@ -838,6 +840,7 @@ function App() {
                           size="sm"
                           className="p-2"
                           isDark={isDarkMode}
+                          title={t.editCategory}
                         >
                           <Edit3 size={16} />
                         </TouchButton>
@@ -849,6 +852,7 @@ function App() {
                             size="sm"
                             className="p-2"
                             isDark={isDarkMode}
+                            title={t.deleteCategory}
                           >
                             <Trash2 size={16} />
                           </TouchButton>
@@ -891,7 +895,7 @@ function App() {
                               size="sm"
                               className="p-2"
                               isDark={isDarkMode}
-                              title="Show QR Code"
+                              title={t.showQrCode}
                             >
                               <QrCode size={16} />
                             </TouchButton>
@@ -903,6 +907,7 @@ function App() {
                               className="p-2"
                               isDark={isDarkMode}
                               isThaiMode={isThaiMode}
+                              title={t.openUrl}
                             >
                               <ExternalLink size={16} />
                             </TouchButton>
@@ -913,6 +918,7 @@ function App() {
                               size="sm"
                               className="p-2"
                               isDark={isDarkMode}
+                              title={t.copyUrl}
                             >
                               <Copy size={16} />
                             </TouchButton>
@@ -923,6 +929,7 @@ function App() {
                               size="sm"
                               className="p-2"
                               isDark={isDarkMode}
+                              title={t.shareUrl}
                             >
                               <Share2 size={16} />
                             </TouchButton>
@@ -934,6 +941,18 @@ function App() {
                                   `Are you sure you want to delete "${url.title}"? This action cannot be undone.`,
                                   () => {
                                     setUrls(prev => prev.filter(u => u.id !== url.id));
+                                    showToast('URL deleted', 'success');
+                                  }
+                                );
+                              }}
+                              variant="danger"
+                              size="sm"
+                              className="p-2"
+                              isDark={isDarkMode}
+                              title={t.deleteUrl}
+                            >
+                              <Trash2 size={16} />
+                            </TouchButton>.filter(u => u.id !== url.id));
                                     showToast('URL deleted', 'success');
                                   }
                                 );
@@ -986,7 +1005,7 @@ function App() {
 
         {/* Performance Stats - Only show when toggled */}
         {user && urls.length > 0 && showAnalytics && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} shadow-xl ${themeConfig.shadowColor}`}>
+          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder} ${themeConfig.shadowColor}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
                 <BarChart3 className="text-white" size={16} />
