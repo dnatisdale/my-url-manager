@@ -110,12 +110,14 @@ export const ShareModal = ({
         {/* QR Code Display (if showing QR) */}
         {showQR && (
           <div className="text-center mb-6">
-            <img 
-              src={qrUrl} 
-              alt={`QR Code for ${title}`}
-              className="block mx-auto rounded-2xl shadow-lg"
-              style={{ width: qrSize, height: qrSize }}
-            />
+            <div className="inline-block p-[10px] bg-white rounded-2xl shadow-lg">
+              <img 
+                src={qrUrl} 
+                alt={`QR Code for ${title}`}
+                className="block mx-auto rounded-lg"
+                style={{ width: qrSize, height: qrSize }}
+              />
+            </div>
           </div>
         )}
 
