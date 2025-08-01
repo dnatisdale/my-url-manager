@@ -6,8 +6,10 @@ module.exports = {
   swDest: 'build/service-worker.js',
   skipWaiting: true,
   clientsClaim: true,
+  cleanupOutdatedCaches: true,
+  sourcemap: false,
   
-  // Enhanced runtime caching strategies
+  // Runtime caching strategies
   runtimeCaching: [
     // Google Fonts
     {
@@ -17,7 +19,7 @@ module.exports = {
         cacheName: 'google-fonts-stylesheets',
         expiration: {
           maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+          maxAgeSeconds: 60 * 60 * 24 * 365,
         },
       },
     },
@@ -28,7 +30,7 @@ module.exports = {
         cacheName: 'google-fonts-webfonts',
         expiration: {
           maxEntries: 30,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+          maxAgeSeconds: 60 * 60 * 24 * 365,
         },
       },
     },
@@ -41,17 +43,12 @@ module.exports = {
         cacheName: 'qr-code-api',
         expiration: {
           maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-        },
-        cacheKeyWillBeUsed: async ({request}) => {
-          // Create a stable cache key for QR codes
-          const url = new URL(request.url);
-          return url.origin + url.pathname + '?data=' + url.searchParams.get('data');
+          maxAgeSeconds: 60 * 60 * 24 * 30,
         },
       },
     },
     
-    // Static assets (images, icons, etc.)
+    // Static assets
     {
       urlPattern: /\.(?:png|gif|jpg|jpeg|svg|ico|webp)$/,
       handler: 'CacheFirst',
@@ -59,12 +56,12 @@ module.exports = {
         cacheName: 'images',
         expiration: {
           maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+          maxAgeSeconds: 60 * 60 * 24 * 30,
         },
       },
     },
     
-    // JavaScript and CSS files
+    // JS and CSS
     {
       urlPattern: /\.(?:js|css)$/,
       handler: 'StaleWhileRevalidate',
@@ -72,44 +69,9 @@ module.exports = {
         cacheName: 'static-resources',
       },
     },
-    
-    // App shell (HTML documents)
-    {
-      urlPattern: /^https:\/\/.*\.netlify\.app\/.*$/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'app-shell',
-        networkTimeoutSeconds: 3,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
-        },
-      },
-    },
-    
-    // API calls and external resources
-    {
-      urlPattern: /^https:\/\/api\./,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        networkTimeoutSeconds: 5,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 5, // 5 minutes
-        },
-      },
-    },
   ],
   
   // Offline fallback
   navigateFallback: '/index.html',
   navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
-  
-  // Additional Workbox options
-  cleanupOutdatedCaches: true,
-  sourcemap: false,
-  
-  // Custom service worker additions
-  swSrc: 'src/sw-template.js',
 };
