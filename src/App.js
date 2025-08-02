@@ -18,13 +18,6 @@ import { URLInputSection } from './components/URLInputSection';
 import { URLListSection } from './components/URLListSection';
 import { firebaseSync } from './services/firebaseSync';
 
-// NEW IMPORTS - Add these new components
-import { InfoTooltip } from './components/InfoTooltip';
-import { URLValidator } from './components/URLValidator';
-import { ActionDropdown } from './components/ActionDropdown';
-import { DownloadManager } from './components/DownloadManager';
-import { PWASharing } from './components/PWASharing';
-
 function App() {
   // Core state
   const [urls, setUrls] = useState([]);
@@ -40,9 +33,6 @@ function App() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  
-  // NEW STATE - Add these for the new components
-  const [urlValidation, setUrlValidation] = useState(null);
   
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -85,14 +75,6 @@ function App() {
 
   // Get current translations and theme
   const t = translations[isThaiMode ? 'th' : 'en'];
-
-  // Define showToast first
-  const showToast = (message, type = 'info') => {
-  // Your showToast function code goes here
-};
-
-  // NEW - Initialize DownloadManager (moved after showToast is defined)
-  const downloadManager = DownloadManager({ isDark: isDarkMode, onShowToast: showToast });
   const themeKey = isDarkMode ? (isThaiMode ? 'thaiDark' : 'dark') : (isThaiMode ? 'thai' : 'light');
   const themeConfig = themes[themeKey];
 
@@ -243,7 +225,7 @@ function App() {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // URL validation function - UPDATED to use validation result
+  // URL validation function
   const isValidUrl = (string) => {
     try {
       if (string.includes('.') && !string.includes(' ') && string.length > 3) {
@@ -314,51 +296,19 @@ function App() {
     showToast('Signed out successfully', 'info');
   };
 
-  // NEW HELPER FUNCTIONS for ActionDropdown
-  const deleteUrl = (urlId) => {
-    setUrls(prev => prev.filter(url => url.id !== urlId));
-    showToast('URL deleted', 'success');
-  };
-
-  const editUrl = (urlId) => {
-    const url = urls.find(u => u.id === urlId);
-    if (url) {
-      setCurrentUrl(url.url);
-      // You might want to scroll to the input or focus it
-    }
-  };
-
-  const moveUrlToCategory = (urlId, newCategory) => {
-    setUrls(prev => prev.map(url => 
-      url.id === urlId ? { ...url, category: newCategory } : url
-    ));
-    showToast(`URL moved to ${newCategory}`, 'success');
-  };
-
-  // UPDATED Add URL function with validation
+  // Add URL function with validation and category
   const addUrl = (category) => {
     if (!currentUrl.trim()) return;
     
-    // Use validation result if available
-    const finalUrl = urlValidation?.processedUrl || currentUrl.trim();
+    let url = currentUrl.trim();
     
-    // Check validation if we have it
-    if (urlValidation && !urlValidation.isValid) {
-      showToast('Please enter a valid URL', 'error');
+    if (!isValidUrl(url)) {
+      showToast(t.invalidUrl + ': ' + t.pleaseEnterValidUrl, 'error');
       return;
     }
     
-    // Fallback to original validation if no URLValidator result
-    let url = finalUrl;
-    if (!urlValidation) {
-      if (!isValidUrl(url)) {
-        showToast(t.invalidUrl + ': ' + t.pleaseEnterValidUrl, 'error');
-        return;
-      }
-      
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
     }
 
     const newUrl = {
@@ -373,7 +323,6 @@ function App() {
     setUrls(prev => [newUrl, ...prev]);
     setCurrentUrl('');
     setSelectedCategory('');
-    setUrlValidation(null); // Reset validation
     showToast(t.urlAdded, 'success');
   };
 
@@ -574,8 +523,6 @@ function App() {
         handleInstallPWA={handleInstallPWA}
         isOnline={isOnline}
         isSyncing={isSyncing}
-        // NEW - Add PWA Sharing to header
-        pwaSharing={<PWASharing isDark={isDarkMode} onShowToast={showToast} />}
       />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -594,30 +541,19 @@ function App() {
         )}
 
         {user && (
-          <div>
-            <URLInputSection
-              t={t}
-              themeConfig={themeConfig}
-              isDarkMode={isDarkMode}
-              isThaiMode={isThaiMode}
-              currentUrl={currentUrl}
-              setCurrentUrl={setCurrentUrl}
-              addUrl={addUrl}
-              handleUrlKeyPress={handleUrlKeyPress}
-              categories={categories}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-            />
-            
-            {/* NEW - Add URL Validator below input */}
-            <URLValidator 
-              url={currentUrl}
-              onValidationChange={setUrlValidation}
-              isDark={isDarkMode}
-              themeConfig={themeConfig}
-              onShowToast={showToast}
-            />
-          </div>
+          <URLInputSection
+            t={t}
+            themeConfig={themeConfig}
+            isDarkMode={isDarkMode}
+            isThaiMode={isThaiMode}
+            currentUrl={currentUrl}
+            setCurrentUrl={setCurrentUrl}
+            addUrl={addUrl}
+            handleUrlKeyPress={handleUrlKeyPress}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
         )}
 
         {user && urls.length > 0 && (
@@ -672,11 +608,6 @@ function App() {
                 >
                   <FolderPlus size={16} />
                   {t.addCategory}
-                  {/* NEW - Replace * with InfoTooltip */}
-                  <InfoTooltip 
-                    message="Create a new category to organize your URLs"
-                    isDark={isDarkMode}
-                  />
                 </TouchButton>
               </div>
             </div>
@@ -698,13 +629,6 @@ function App() {
             setUrls={setUrls}
             showToast={showToast}
             setCategoryModal={setCategoryModal}
-            // NEW - Pass ActionDropdown props
-            ActionDropdown={ActionDropdown}
-            deleteUrl={deleteUrl}
-            editUrl={editUrl}
-            moveUrlToCategory={moveUrlToCategory}
-            categories={categories}
-            downloadManager={downloadManager}
           />
         )}
 
@@ -767,16 +691,10 @@ function App() {
                 <div className={`text-sm ${themeConfig.textSecondary}`}>Compression</div>
               </div>
             </div>
-
-            {/* NEW - Add download location display */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <downloadManager.DownloadLocationDisplay />
-            </div>
           </div>
         )}
       </main>
 
-      {/* Action Bar for Selected URLs */}
       <ActionBar
         selectedUrls={selectedUrls}
         urls={urls}
@@ -790,7 +708,6 @@ function App() {
         themeConfig={themeConfig}
       />
 
-      {/* Category Management Modal */}
       <CategoryModal
         isOpen={categoryModal.isOpen}
         onClose={() => setCategoryModal({ isOpen: false, mode: 'add', category: '' })}
@@ -811,7 +728,6 @@ function App() {
         themeConfig={themeConfig}
       />
 
-      {/* Share Modal with QR Codes */}
       <ShareModal
         isOpen={shareModal.isOpen}
         onClose={closeShareModal}
@@ -824,7 +740,19 @@ function App() {
         onShowToast={showToast}
       />
 
-      {/* Confirmation Modal for Deletions */}
+      <BackupExportModal
+        isOpen={backupModal}
+        onClose={() => setBackupModal(false)}
+        urls={urls}
+        categories={categories}
+        user={user}
+        onImport={handleImport}
+        t={t}
+        isDark={isDarkMode}
+        themeConfig={themeConfig}
+        onShowToast={showToast}
+      />
+
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         onClose={closeConfirmModal}
@@ -839,67 +767,6 @@ function App() {
         isDark={isDarkMode}
         themeConfig={themeConfig}
       />
-
-      {/* Backup and Export Modal */}
-      <BackupExportModal
-        isOpen={backupModal}
-        onClose={() => setBackupModal(false)}
-        urls={urls}
-        categories={categories}
-        user={user}
-        onImport={handleImport}
-        t={t}
-        isDark={isDarkMode}
-        isThaiMode={isThaiMode}
-        themeConfig={themeConfig}
-        onShowToast={showToast}
-        downloadManager={downloadManager}
-      />
-
-      {/* Loading spinner overlay when syncing */}
-      {isSyncing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className={`${themeConfig.cardBg} rounded-2xl p-6 border ${themeConfig.cardBorder} flex flex-col items-center gap-4`}>
-            <LoadingSpinner size="lg" color={isDarkMode ? 'purple' : 'blue'} />
-            <div className={`${themeConfig.text} font-medium`}>
-              {t.syncing || 'Syncing data...'}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Offline indicator */}
-      {!isOnline && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-40">
-          <div className={`
-            px-4 py-2 rounded-lg border flex items-center gap-2 text-sm font-medium
-            ${isDarkMode 
-              ? 'bg-gray-800 border-gray-700 text-gray-300' 
-              : 'bg-white border-gray-200 text-gray-700'
-            }
-          `}>
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            {t.offline || 'Offline'}
-          </div>
-        </div>
-      )}
-
-      {/* Performance monitoring in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className={`
-            px-3 py-2 rounded-lg text-xs font-mono border
-            ${isDarkMode 
-              ? 'bg-gray-800 border-gray-700 text-gray-300' 
-              : 'bg-white border-gray-200 text-gray-700'
-            }
-          `}>
-            <div>URLs: {urls.length}</div>
-            <div>Memory: {dataUtils.formatBytes(metrics.memoryUsage)}</div>
-            <div>Size: {dataUtils.formatBytes(metrics.dataSize)}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
