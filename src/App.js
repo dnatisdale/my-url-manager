@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { Header } from './components/Header';
 import { AddURLForm } from './components/AddURLForm';
 import { SearchAndFilters } from './components/SearchAndFilters';
@@ -7,10 +8,14 @@ import { CategoryManager } from './components/CategoryManager';
 import { ExportImport } from './components/ExportImport';
 import { HealthMonitor } from './components/HealthMonitor';
 import { StatsDashboard } from './components/StatsDashboard';
+import { ThemeSettings } from './components/ThemeSettings';
 import { Footer } from './components/Footer';
 import { urlHealthService } from './services/URLHealthService';
 
-function App() {
+// Main App Component (wrapped inside ThemeProvider)
+const AppContent = () => {
+  const { getColors } = useTheme();
+  const colors = getColors();
   // State management
   const [urls, setUrls] = useState([]);
   const [categories, setCategories] = useState(['General', 'Work', 'Personal', 'Resources']);
@@ -247,73 +252,96 @@ function App() {
   const urlCountsByCategory = getUrlCountsByCategory();
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      
-      <Header 
-        categoriesCount={categories.length}
-        urlsCount={urls.length}
-        healthStats={urlHealthService.getHealthStats()}
-      />
+    <div style={{ 
+      minHeight: '100vh',
+      background: colors.background,
+      transition: 'background-color 0.3s ease',
+      paddingBottom: '40px'
+    }}>
+      <div style={{ 
+        padding: '20px', 
+        maxWidth: '900px', 
+        margin: '0 auto'
+      }}>
+        
+        <Header 
+          categoriesCount={categories.length}
+          urlsCount={urls.length}
+          healthStats={urlHealthService.getHealthStats()}
+        />
 
-      <AddURLForm 
-        categories={categories}
-        onAddUrl={addUrl}
-      />
+        <AddURLForm 
+          categories={categories}
+          onAddUrl={addUrl}
+        />
 
-      {/* NEW: Statistics Dashboard */}
-      <StatsDashboard
-        urls={urls}
-        categories={categories}
-      />
+        {/* NEW: Theme Settings */}
+        <ThemeSettings />
 
-      {/* Health Monitor Component */}
-      <HealthMonitor
-        urls={urls}
-        onHealthUpdate={handleHealthUpdate}
-      />
+        {/* Statistics Dashboard */}
+        <StatsDashboard
+          urls={urls}
+          categories={categories}
+        />
 
-      {/* Export/Import Component */}
-      <ExportImport
-        urls={urls}
-        categories={categories}
-        onImportData={handleImportData}
-      />
+        {/* Health Monitor Component */}
+        <HealthMonitor
+          urls={urls}
+          onHealthUpdate={handleHealthUpdate}
+        />
 
-      {urls.length > 0 && (
-        <>
-          <SearchAndFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
-            categories={categories}
-            urlCountsByCategory={urlCountsByCategory}
-            urls={urls}
-            filteredUrls={filteredAndSortedUrls}
-            onClearSearch={clearSearch}
-            hasHealthSorting={true} // NEW: Enable health sorting
-          />
+        {/* Export/Import Component */}
+        <ExportImport
+          urls={urls}
+          categories={categories}
+          onImportData={handleImportData}
+        />
 
-          <URLList 
-            urls={filteredAndSortedUrls}
-            allUrls={urls}
-            onDeleteUrl={deleteUrl}
-            onCopyUrl={copyUrl}
-            showHealthIndicators={true} // NEW: Show health indicators in list
-          />
+        {urls.length > 0 && (
+          <>
+            <SearchAndFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              categories={categories}
+              urlCountsByCategory={urlCountsByCategory}
+              urls={urls}
+              filteredUrls={filteredAndSortedUrls}
+              onClearSearch={clearSearch}
+              hasHealthSorting={true}
+            />
 
-          <CategoryManager
-            categories={categories}
-            urlCountsByCategory={urlCountsByCategory}
-            onDeleteCategory={deleteCategory}
-          />
-        </>
-      )}
+            <URLList 
+              urls={filteredAndSortedUrls}
+              allUrls={urls}
+              onDeleteUrl={deleteUrl}
+              onCopyUrl={copyUrl}
+              showHealthIndicators={true}
+            />
 
-      <Footer phase="4" feature="Statistics Dashboard" />
+            <CategoryManager
+              categories={categories}
+              urlCountsByCategory={urlCountsByCategory}
+              onDeleteCategory={deleteCategory}
+            />
+          </>
+        )}
+
+        <Footer phase="5" feature="Dark Mode & Enhanced UI" />
+      </div>
     </div>
+  );
+};
+
+// App wrapper with ThemeProvider
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
