@@ -1,5 +1,6 @@
-// services/URLHealthService.js
+import React from 'react';
 
+// URL Health Service
 class URLHealthService {
   constructor() {
     this.healthCache = new Map();
@@ -64,7 +65,6 @@ class URLHealthService {
     } = options;
 
     if (this.checkQueue.has(url)) {
-      // Already checking this URL
       return this.getHealthData(url);
     }
 
@@ -130,13 +130,11 @@ class URLHealthService {
         lastError = error;
         
         if (attempt < retries) {
-          // Wait before retry
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
       }
     }
 
-    // Try alternative methods if direct fetch fails
     try {
       return await this.alternativeHealthCheck(url, timeout);
     } catch (altError) {
@@ -152,7 +150,7 @@ class URLHealthService {
     try {
       const response = await fetch(url, {
         method: 'HEAD',
-        mode: 'no-cors', // Avoid CORS issues
+        mode: 'no-cors',
         signal: controller.signal,
         cache: 'no-cache',
         redirect: 'follow'
@@ -160,7 +158,7 @@ class URLHealthService {
 
       clearTimeout(timeoutId);
       return {
-        ok: true, // With no-cors, we assume OK if no error
+        ok: true,
         status: 'unknown',
         redirected: false,
         url: url
@@ -202,58 +200,10 @@ class URLHealthService {
       img.onerror = () => {
         cleanup();
         clearTimeout(timeoutId);
-        
-        // Try loading the main page
-        this.checkViaIframe(url, timeout - (Date.now() - startTime))
-          .then(resolve)
-          .catch(reject);
+        reject(new Error('URL not accessible'));
       };
 
-      // Try to load favicon
       img.src = `${url}/favicon.ico?t=${Date.now()}`;
-    });
-  }
-
-  // Check via iframe (last resort)
-  async checkViaIframe(url, remainingTimeout) {
-    return new Promise((resolve, reject) => {
-      const iframe = document.createElement('iframe');
-      const startTime = Date.now();
-      
-      iframe.style.display = 'none';
-      iframe.style.width = '1px';
-      iframe.style.height = '1px';
-
-      const cleanup = () => {
-        if (iframe.parentNode) {
-          iframe.parentNode.removeChild(iframe);
-        }
-      };
-
-      const timeoutId = setTimeout(() => {
-        cleanup();
-        reject(new Error('URL not accessible'));
-      }, Math.min(remainingTimeout, 5000));
-
-      iframe.onload = () => {
-        cleanup();
-        clearTimeout(timeoutId);
-        resolve({
-          isHealthy: true,
-          responseTime: Date.now() - startTime,
-          statusCode: 'iframe-success',
-          error: null
-        });
-      };
-
-      iframe.onerror = () => {
-        cleanup();
-        clearTimeout(timeoutId);
-        reject(new Error('URL not accessible'));
-      };
-
-      document.body.appendChild(iframe);
-      iframe.src = url;
     });
   }
 
@@ -288,7 +238,6 @@ class URLHealthService {
 
       await Promise.allSettled(batchPromises);
 
-      // Delay between batches to avoid overwhelming servers
       if (i + batchSize < urls.length && delayBetweenBatches > 0) {
         await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
       }
@@ -371,14 +320,12 @@ export const useURLHealth = (urls = []) => {
   const [isChecking, setIsChecking] = React.useState(false);
 
   React.useEffect(() => {
-    // Initialize health data for all URLs
     const initialData = new Map();
     urls.forEach(url => {
       initialData.set(url, urlHealthService.getHealthData(url));
     });
     setHealthData(initialData);
 
-    // Subscribe to health updates
     const unsubscribe = urlHealthService.subscribe((url, health) => {
       setHealthData(prev => new Map(prev.set(url, health)));
     });

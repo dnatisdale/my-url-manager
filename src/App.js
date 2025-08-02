@@ -12,11 +12,38 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { PWASharing } from './components/PWASharing';
 import { DownloadManager } from './components/DownloadManager';
 import { urlHealthService } from './services/URLHealthService';
-import { THEMES } from './constants/themes';
-import { TRANSLATIONS } from './constants/translations';
 
-// Import Firebase services if you're using them
-// import { firebaseService } from './services/firebaseService';
+// Built-in translations (removed the import that was causing the error)
+const TRANSLATIONS = {
+  en: {
+    addURL: { title: 'Add New URL' },
+    confirmDelete: { 
+      title: 'Delete URL', 
+      message: 'Are you sure you want to delete',
+      confirm: 'Delete'
+    },
+    confirmDeleteCategory: {
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete category',
+      confirm: 'Delete'
+    },
+    backup: { title: 'Backup & Export' }
+  },
+  th: {
+    addURL: { title: 'เพิ่ม URL ใหม่' },
+    confirmDelete: { 
+      title: 'ลบ URL', 
+      message: 'คุณแน่ใจหรือไม่ที่จะลบ',
+      confirm: 'ลบ'
+    },
+    confirmDeleteCategory: {
+      title: 'ลบหมวดหมู่',
+      message: 'คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่',
+      confirm: 'ลบ'
+    },
+    backup: { title: 'สำรองข้อมูล และส่งออก' }
+  }
+};
 
 function App() {
   // Core state
@@ -42,7 +69,7 @@ function App() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [editingURL, setEditingURL] = useState(null);
   
-  // User state (if using authentication)
+  // User state (for future authentication)
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
@@ -119,14 +146,6 @@ function App() {
         setCategories(JSON.parse(savedCategories));
       }
       
-      // Load user authentication state if using Firebase
-      // const userData = await firebaseService.getCurrentUser();
-      // if (userData) {
-      //   setUser(userData);
-      //   setIsSignedIn(true);
-      //   await syncWithCloud();
-      // }
-      
     } catch (error) {
       console.error('Error initializing app:', error);
     } finally {
@@ -181,11 +200,6 @@ function App() {
         saveToLocalStorage(updatedUrls);
       }
       
-      // If cloud sync is enabled
-      // if (isSignedIn) {
-      //   await firebaseService.addURL(newURL);
-      // }
-      
     } catch (error) {
       console.error('Error adding URL:', error);
     }
@@ -217,11 +231,6 @@ function App() {
       setEditingURL(null);
       setCurrentURL(null);
       
-      // If cloud sync is enabled
-      // if (isSignedIn) {
-      //   await firebaseService.updateURL(updatedURL);
-      // }
-      
     } catch (error) {
       console.error('Error updating URL:', error);
     }
@@ -251,11 +260,6 @@ function App() {
       if (urlToDelete) {
         urlHealthService.removeFromCache(urlToDelete.url);
       }
-      
-      // If cloud sync is enabled
-      // if (isSignedIn) {
-      //   await firebaseService.deleteURL(urlId);
-      // }
       
       setShowConfirmModal(false);
       setCurrentURL(null);
@@ -383,43 +387,6 @@ function App() {
     setSelectedCategory(category);
   };
 
-  // Authentication (if using Firebase)
-  const handleSignIn = async (email, password) => {
-    try {
-      // const userData = await firebaseService.signIn(email, password);
-      // setUser(userData);
-      // setIsSignedIn(true);
-      // await syncWithCloud();
-    } catch (error) {
-      console.error('Sign in error:', error);
-      throw error;
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      // await firebaseService.signOut();
-      setUser(null);
-      setIsSignedIn(false);
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
-
-  // Cloud sync (if using Firebase)
-  const syncWithCloud = async () => {
-    try {
-      // const cloudData = await firebaseService.syncData(urls, categories);
-      // if (cloudData) {
-      //   setUrls(cloudData.urls || []);
-      //   setCategories(cloudData.categories || []);
-      //   saveToLocalStorage(cloudData.urls || [], cloudData.categories || []);
-      // }
-    } catch (error) {
-      console.error('Cloud sync error:', error);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -446,15 +413,6 @@ function App() {
             categoryCount={categories.length}
             healthStats={urlHealthService.getHealthStats()}
           />
-
-          {/* Sign In Section (if using authentication) */}
-          {/* <SignInSection
-            isSignedIn={isSignedIn}
-            user={user}
-            onSignIn={handleSignIn}
-            onSignOut={handleSignOut}
-            translations={t}
-          /> */}
 
           {/* Main Content */}
           <div className="space-y-6">
@@ -486,7 +444,6 @@ function App() {
               onEditURL={handleEditURL}
               onDeleteURL={handleDeleteURL}
               onGenerateQR={handleGenerateQR}
-              onShare={handleShare}
               searchTerm={searchTerm}
               selectedCategory={selectedCategory}
               translations={t}
