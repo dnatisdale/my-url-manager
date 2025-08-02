@@ -1,772 +1,555 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, X, BarChart3, FolderPlus, Check } from 'lucide-react';
-
-// Import our modularized components and utilities
-import { translations } from './constants/translations';
-import { themes } from './constants/themes';
-import { dataUtils } from './utils/dataUtils';
-import { usePerformanceMonitor, useOfflineStatus } from './hooks/useCustomHooks';
-import { LoadingSpinner, TouchButton, Toast } from './components/UI';
-import { ActionBar } from './components/ActionBar';
-import { CategoryModal } from './components/CategoryModal';
-import { ShareModal } from './components/ShareModal';
-import { ConfirmationModal } from './components/ConfirmationModal';
-import { BackupExportModal } from './components/BackupExportModal';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HeaderSection } from './components/HeaderSection';
 import { SignInSection } from './components/SignInSection';
 import { URLInputSection } from './components/URLInputSection';
 import { URLListSection } from './components/URLListSection';
-import { firebaseSync } from './services/firebaseSync';
+import { ActionBar } from './components/ActionBar';
+import { CategoryModal } from './components/CategoryModal';
+import { BackupExportModal } from './components/BackupExportModal';
+import { QRCodeModal } from './components/QRCodeModal';
+import { ShareModal } from './components/ShareModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { PWASharing } from './components/PWASharing';
+import { DownloadManager } from './components/DownloadManager';
+import { urlHealthService } from './services/URLHealthService';
+import { THEMES } from './constants/themes';
+import { TRANSLATIONS } from './constants/translations';
+
+// Import Firebase services if you're using them
+// import { firebaseService } from './services/firebaseService';
 
 function App() {
   // Core state
   const [urls, setUrls] = useState([]);
-  const [selectedUrls, setSelectedUrls] = useState([]);
-  const [categories, setCategories] = useState(['Save for Later', 'Thailand']);
+  const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentUrl, setCurrentUrl] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [isThaiMode, setIsThaiMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // UI state
+  const [theme, setTheme] = useState('light');
+  const [language, setLanguage] = useState('en');
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Modal state
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  // Current data for modals
+  const [currentURL, setCurrentURL] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [editingURL, setEditingURL] = useState(null);
+  
+  // User state (if using authentication)
   const [user, setUser] = useState(null);
-  const [email, setEmail] = useState('');
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  
-  // PWA Install
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
-  
-  // Modal states
-  const [categoryModal, setCategoryModal] = useState({
-    isOpen: false,
-    mode: 'add',
-    category: ''
-  });
-  
-  const [shareModal, setShareModal] = useState({
-    isOpen: false,
-    url: '',
-    title: '',
-    showQR: false
-  });
-  
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: null,
-    type: 'danger',
-    urlsToDelete: null
-  });
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
-  const [backupModal, setBackupModal] = useState(false);
-  
-  const [toast, setToast] = useState({
-    isVisible: false,
-    message: '',
-    type: 'success'
-  });
+  // Get current translations
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
-  // Performance and offline hooks
-  const { metrics, updateDataMetrics, updateMemoryUsage } = usePerformanceMonitor();
-  const { isOnline } = useOfflineStatus();
-
-  // Get current translations and theme
-  const t = translations[isThaiMode ? 'th' : 'en'];
-  const themeKey = isDarkMode ? (isThaiMode ? 'thaiDark' : 'dark') : (isThaiMode ? 'thai' : 'light');
-  const themeConfig = themes[themeKey];
-
-  // PWA Install Prompt Detection
+  // Initialize app
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallButton(true);
-    };
+    initializeApp();
+  }, []);
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  // Initialize health monitoring
+  useEffect(() => {
+    // Start periodic health checks every 30 minutes
+    urlHealthService.startPeriodicChecks(30);
     
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setShowInstallButton(false);
-    }
-
+    // Subscribe to health updates to sync with URL data
+    const unsubscribe = urlHealthService.subscribe((url, healthData) => {
+      setUrls(prevUrls => 
+        prevUrls.map(urlItem => 
+          urlItem.url === url 
+            ? {
+                ...urlItem,
+                isHealthy: healthData.isHealthy,
+                lastHealthCheck: healthData.lastChecked,
+                healthData: healthData
+              }
+            : urlItem
+        )
+      );
+    });
+    
+    // Cleanup on unmount
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      urlHealthService.stopPeriodicChecks();
+      unsubscribe();
     };
   }, []);
 
-  // Handle PWA Install
-  const handleInstallPWA = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      showToast('App installed successfully!', 'success');
-    }
-    
-    setDeferredPrompt(null);
-    setShowInstallButton(false);
-  };
-
-  // Load data on component mount
-  useEffect(() => {
-    loadData();
-    updateMemoryUsage();
-    
-    const savedEmail = localStorage.getItem('goodNewsRememberedEmail');
-    if (savedEmail) {
-      setEmail(savedEmail);
-    }
-  }, [updateMemoryUsage]);
-
-  // Update performance metrics when URLs change
-  useEffect(() => {
-    updateDataMetrics(urls);
-  }, [urls, updateDataMetrics]);
-
-  // Auto-sync when user changes and online
-  useEffect(() => {
-    if (user && isOnline && urls.length > 0) {
-      syncToCloud();
-    }
-  }, [user, isOnline]);
-
   // Load data from localStorage
-  const loadData = () => {
+  const initializeApp = async () => {
     try {
-      const savedUrls = localStorage.getItem('goodNewsUrls');
-      const savedCategories = localStorage.getItem('goodNewsCategories');
-      const savedUser = localStorage.getItem('goodNewsUser');
-      const savedTheme = localStorage.getItem('goodNewsTheme');
-      const savedLanguage = localStorage.getItem('goodNewsLanguage');
-
-      if (savedUrls) setUrls(JSON.parse(savedUrls));
-      if (savedCategories) setCategories(JSON.parse(savedCategories));
-      if (savedUser) setUser(JSON.parse(savedUser));
-      if (savedTheme) setIsDarkMode(savedTheme === 'dark');
-      if (savedLanguage) setIsThaiMode(savedLanguage === 'th');
-    } catch (error) {
-      console.error('Error loading data:', error);
-      showToast('Error loading data', 'error');
-    }
-  };
-
-  // Save data to localStorage and sync to cloud
-  const saveData = useCallback(async () => {
-    try {
-      localStorage.setItem('goodNewsUrls', JSON.stringify(urls));
-      localStorage.setItem('goodNewsCategories', JSON.stringify(categories));
-      localStorage.setItem('goodNewsUser', JSON.stringify(user));
-      localStorage.setItem('goodNewsTheme', isDarkMode ? 'dark' : 'light');
-      localStorage.setItem('goodNewsLanguage', isThaiMode ? 'th' : 'en');
+      setIsLoading(true);
       
-      if (user && isOnline && urls.length > 0) {
-        await syncToCloud();
+      // Load theme preference
+      const savedTheme = localStorage.getItem('url-manager-theme') || 'light';
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      
+      // Load language preference
+      const savedLanguage = localStorage.getItem('url-manager-language') || 'en';
+      setLanguage(savedLanguage);
+      
+      // Load URLs from localStorage
+      const savedUrls = localStorage.getItem('url-manager-urls');
+      if (savedUrls) {
+        const parsedUrls = JSON.parse(savedUrls);
+        setUrls(parsedUrls);
+        
+        // Initialize health service with existing health data
+        parsedUrls.forEach(url => {
+          if (url.healthData) {
+            urlHealthService.healthCache.set(url.url, {
+              ...url.healthData,
+              lastChecked: url.lastHealthCheck || new Date().toISOString()
+            });
+          }
+        });
       }
+      
+      // Load categories
+      const savedCategories = localStorage.getItem('url-manager-categories');
+      if (savedCategories) {
+        setCategories(JSON.parse(savedCategories));
+      }
+      
+      // Load user authentication state if using Firebase
+      // const userData = await firebaseService.getCurrentUser();
+      // if (userData) {
+      //   setUser(userData);
+      //   setIsSignedIn(true);
+      //   await syncWithCloud();
+      // }
+      
     } catch (error) {
-      console.error('Error saving data:', error);
-      showToast('Error saving data', 'error');
+      console.error('Error initializing app:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [urls, categories, user, isDarkMode, isThaiMode, isOnline]);
-
-  // Cloud sync function
-  const syncToCloud = async () => {
-    if (!user || isSyncing) return;
-    
-    setIsSyncing(true);
-    const syncData = { urls, categories };
-    const result = await firebaseSync.syncToCloud(user.email, syncData);
-    
-    if (result.success) {
-      showToast(t.syncComplete, 'success');
-    } else {
-      showToast(t.syncFailed, 'warning');
-    }
-    
-    setIsSyncing(false);
   };
 
-  // Load from cloud on sign in
-  const loadFromCloud = async (userEmail) => {
-    setIsSyncing(true);
-    const result = await firebaseSync.fetchFromCloud(userEmail);
-    
-    if (result.success && result.data) {
-      setUrls(result.data.urls || []);
-      setCategories(result.data.categories || ['Save for Later', 'Thailand']);
-      showToast('Data loaded from cloud', 'success');
-    } else if (result.success && !result.data) {
-      showToast('No cloud data found - first time login', 'info');
-    } else {
-      showToast('Failed to load cloud data', 'error');
-    }
-    
-    setIsSyncing(false);
-  };
-
-  // Auto-save when data changes
-  useEffect(() => {
-    if (urls.length > 0 || user) {
-      saveData();
-    }
-  }, [urls, categories, user, isDarkMode, isThaiMode, saveData]);
-
-  // Show toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ isVisible: true, message, type });
-  };
-
-  // Hide toast notification
-  const hideToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }));
-  };
-
-  // URL validation function
-  const isValidUrl = (string) => {
+  // Save data to localStorage
+  const saveToLocalStorage = useCallback((updatedUrls = urls, updatedCategories = categories) => {
     try {
-      if (string.includes('.') && !string.includes(' ') && string.length > 3) {
-        new URL('https://' + string);
-        return true;
+      localStorage.setItem('url-manager-urls', JSON.stringify(updatedUrls));
+      localStorage.setItem('url-manager-categories', JSON.stringify(updatedCategories));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }, [urls, categories]);
+
+  // Theme management
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    localStorage.setItem('url-manager-theme', newTheme);
+  };
+
+  // Language management
+  const toggleLanguage = () => {
+    const newLanguage = language === 'en' ? 'th' : 'en';
+    setLanguage(newLanguage);
+    localStorage.setItem('url-manager-language', newLanguage);
+  };
+
+  // URL management
+  const handleAddURL = async (urlData) => {
+    try {
+      // Ensure URL has an ID
+      const newURL = {
+        ...urlData,
+        id: urlData.id || Date.now().toString(),
+        dateAdded: urlData.dateAdded || new Date().toISOString()
+      };
+
+      const updatedUrls = [newURL, ...urls];
+      setUrls(updatedUrls);
+      
+      // Update categories if new category was added
+      if (newURL.category && !categories.includes(newURL.category)) {
+        const updatedCategories = [...categories, newURL.category].sort();
+        setCategories(updatedCategories);
+        saveToLocalStorage(updatedUrls, updatedCategories);
+      } else {
+        saveToLocalStorage(updatedUrls);
       }
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
+      
+      // If cloud sync is enabled
+      // if (isSignedIn) {
+      //   await firebaseService.addURL(newURL);
+      // }
+      
+    } catch (error) {
+      console.error('Error adding URL:', error);
     }
   };
 
-  // Open Share modal
-  const openShareModal = (url, title, showQR = false) => {
-    setShareModal({ isOpen: true, url, title, showQR });
+  const handleEditURL = (url) => {
+    setEditingURL(url);
+    setCurrentURL(url);
+    setShowCategoryModal(true);
   };
 
-  // Close Share modal
-  const closeShareModal = () => {
-    setShareModal({ isOpen: false, url: '', title: '', showQR: false });
+  const handleUpdateURL = async (updatedURL) => {
+    try {
+      const updatedUrls = urls.map(url => 
+        url.id === updatedURL.id ? { ...updatedURL, dateModified: new Date().toISOString() } : url
+      );
+      setUrls(updatedUrls);
+      
+      // Update categories if needed
+      const newCategory = updatedURL.category;
+      if (newCategory && !categories.includes(newCategory)) {
+        const updatedCategories = [...categories, newCategory].sort();
+        setCategories(updatedCategories);
+        saveToLocalStorage(updatedUrls, updatedCategories);
+      } else {
+        saveToLocalStorage(updatedUrls);
+      }
+      
+      setEditingURL(null);
+      setCurrentURL(null);
+      
+      // If cloud sync is enabled
+      // if (isSignedIn) {
+      //   await firebaseService.updateURL(updatedURL);
+      // }
+      
+    } catch (error) {
+      console.error('Error updating URL:', error);
+    }
   };
 
-  // Open confirmation modal
-  const openConfirmModal = (title, message, onConfirm, type = 'danger', urlsToDelete = null) => {
-    setConfirmModal({ isOpen: true, title, message, onConfirm, type, urlsToDelete });
+  const handleDeleteURL = (urlId) => {
+    const urlToDelete = urls.find(url => url.id === urlId);
+    setCurrentURL(urlToDelete);
+    setConfirmAction({
+      type: 'delete',
+      title: t.confirmDelete.title,
+      message: `${t.confirmDelete.message}: "${urlToDelete?.title}"?`,
+      confirmText: t.confirmDelete.confirm,
+      onConfirm: () => confirmDeleteURL(urlId)
+    });
+    setShowConfirmModal(true);
   };
 
-  // Close confirmation modal
-  const closeConfirmModal = () => {
-    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, type: 'danger', urlsToDelete: null });
+  const confirmDeleteURL = async (urlId) => {
+    try {
+      const urlToDelete = urls.find(url => url.id === urlId);
+      const updatedUrls = urls.filter(url => url.id !== urlId);
+      setUrls(updatedUrls);
+      saveToLocalStorage(updatedUrls);
+      
+      // Remove from health monitoring
+      if (urlToDelete) {
+        urlHealthService.removeFromCache(urlToDelete.url);
+      }
+      
+      // If cloud sync is enabled
+      // if (isSignedIn) {
+      //   await firebaseService.deleteURL(urlId);
+      // }
+      
+      setShowConfirmModal(false);
+      setCurrentURL(null);
+      setConfirmAction(null);
+    } catch (error) {
+      console.error('Error deleting URL:', error);
+    }
   };
 
-  // Handle import
-  const handleImport = (importedUrls, importedCategories) => {
-    setUrls(importedUrls);
-    setCategories(importedCategories);
-  };
-
-  // Sign in function
-  const handleSignIn = async () => {
-    if (!email.trim()) return;
-    
-    setIsSigningIn(true);
-    
-    localStorage.setItem('goodNewsRememberedEmail', email.trim());
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newUser = {
-      email: email.trim(),
-      signedInAt: new Date().toISOString()
-    };
-    
-    setUser(newUser);
-    
-    await loadFromCloud(email.trim());
-    
-    setEmail('');
-    setIsSigningIn(false);
-    showToast(t.welcomeBack, 'success');
-  };
-
-  // Sign out function
-  const handleSignOut = () => {
-    setUser(null);
-    setSelectedUrls([]);
-    showToast('Signed out successfully', 'info');
-  };
-
-  // Add URL function with validation and category
-  const addUrl = (category) => {
-    if (!currentUrl.trim()) return;
-    
-    let url = currentUrl.trim();
-    
-    if (!isValidUrl(url)) {
-      showToast(t.invalidUrl + ': ' + t.pleaseEnterValidUrl, 'error');
+  // Category management
+  const handleAddCategory = async (categoryName) => {
+    if (!categoryName.trim() || categories.includes(categoryName.trim())) {
       return;
     }
     
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-    }
-
-    const newUrl = {
-      id: Date.now(),
-      url,
-      title: extractDomain(url),
-      category: category,
-      addedAt: new Date().toISOString(),
-      isSelected: false
-    };
-
-    setUrls(prev => [newUrl, ...prev]);
-    setCurrentUrl('');
-    setSelectedCategory('');
-    showToast(t.urlAdded, 'success');
+    const updatedCategories = [...categories, categoryName.trim()].sort();
+    setCategories(updatedCategories);
+    saveToLocalStorage(urls, updatedCategories);
   };
 
-  // Extract domain from URL
-  const extractDomain = (url) => {
-    try {
-      return new URL(url).hostname.replace('www.', '');
-    } catch {
-      return url;
-    }
-  };
-
-  // Toggle URL selection
-  const toggleUrlSelection = (urlId) => {
-    setSelectedUrls(prev => {
-      const isSelected = prev.includes(urlId);
-      if (isSelected) {
-        return prev.filter(id => id !== urlId);
-      } else {
-        return [...prev, urlId];
-      }
+  const handleDeleteCategory = (categoryName) => {
+    setConfirmAction({
+      type: 'deleteCategory',
+      title: t.confirmDeleteCategory?.title || 'Delete Category',
+      message: `${t.confirmDeleteCategory?.message || 'Delete category'}: "${categoryName}"?`,
+      confirmText: t.confirmDeleteCategory?.confirm || 'Delete',
+      onConfirm: () => confirmDeleteCategory(categoryName)
     });
+    setShowConfirmModal(true);
   };
 
-  // Select all URLs
-  const selectAllUrls = () => {
-    const filteredUrlIds = filteredUrls.map(url => url.id);
-    setSelectedUrls(filteredUrlIds);
-  };
-
-  // Deselect all URLs
-  const deselectAllUrls = () => {
-    setSelectedUrls([]);
-  };
-
-  // Share selected URLs
-  const shareSelectedUrls = async () => {
-    const selectedUrlsData = urls.filter(url => selectedUrls.includes(url.id));
-    const shareText = selectedUrlsData.map(url => `${url.title}: ${url.url}`).join('\n\n');
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: t.appTitle,
-          text: shareText
-        });
-        showToast(t.urlsShared, 'success');
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          copyToClipboard(shareText);
-        }
-      }
-    } else {
-      copyToClipboard(shareText);
-    }
-    
-    setSelectedUrls([]);
-  };
-
-  // Copy to clipboard
-  const copyToClipboard = async (text) => {
+  const confirmDeleteCategory = async (categoryName) => {
     try {
-      await navigator.clipboard.writeText(text);
-      showToast(t.copiedToClipboard, 'success');
+      const updatedCategories = categories.filter(cat => cat !== categoryName);
+      setCategories(updatedCategories);
+      
+      // Remove category from URLs
+      const updatedUrls = urls.map(url => 
+        url.category === categoryName ? { ...url, category: null } : url
+      );
+      setUrls(updatedUrls);
+      
+      saveToLocalStorage(updatedUrls, updatedCategories);
+      
+      setShowConfirmModal(false);
+      setConfirmAction(null);
     } catch (error) {
-      showToast(t.shareNotSupported, 'error');
+      console.error('Error deleting category:', error);
     }
   };
 
-  // Delete selected URLs with confirmation and URL list
-  const deleteSelectedUrls = () => {
-    const count = selectedUrls.length;
-    const urlsToDelete = urls.filter(url => selectedUrls.includes(url.id));
-    
-    openConfirmModal(
-      'Delete URLs',
-      `Are you sure you want to delete ${count} selected URL${count > 1 ? 's' : ''}? This action cannot be undone.`,
-      () => {
-        setUrls(prev => prev.filter(url => !selectedUrls.includes(url.id)));
-        setSelectedUrls([]);
-        showToast(`${count} URL${count > 1 ? 's' : ''} deleted`, 'success');
-      },
-      'danger',
-      urlsToDelete
-    );
-  };
+  // Export/Import functionality
+  const handleExport = async (exportData) => {
+    try {
+      const dataToExport = {
+        urls: urls,
+        categories: categories,
+        exportDate: new Date().toISOString(),
+        version: '1.0',
+        includeMetadata: exportData.includeMetadata,
+        includeHealthStatus: exportData.includeHealthStatus,
+        healthData: exportData.includeHealthStatus ? urlHealthService.exportHealthData() : null
+      };
 
-  // Change category for selected URLs
-  const changeSelectedCategory = (newCategory) => {
-    setUrls(prev => prev.map(url => 
-      selectedUrls.includes(url.id) 
-        ? { ...url, category: newCategory }
-        : url
-    ));
-    setSelectedUrls([]);
-    showToast(t.categoryMoved, 'success');
-  };
-
-  // Add new category
-  const addCategory = (categoryName) => {
-    if (!categories.includes(categoryName)) {
-      setCategories(prev => [...prev, categoryName]);
-      showToast(t.categoryAdded, 'success');
-    }
-  };
-
-  // Update category
-  const updateCategory = (oldName, newName) => {
-    setCategories(prev => prev.map(cat => cat === oldName ? newName : cat));
-    setUrls(prev => prev.map(url => 
-      url.category === oldName ? { ...url, category: newName } : url
-    ));
-    showToast(t.categoryUpdated, 'success');
-  };
-
-  // Delete category with confirmation
-  const deleteCategory = (categoryName) => {
-    const urlCount = urls.filter(url => url.category === categoryName).length;
-    openConfirmModal(
-      'Delete Category',
-      `Are you sure you want to delete "${categoryName}"? ${urlCount > 0 ? `${urlCount} URL${urlCount > 1 ? 's' : ''} will be moved to "Save for Later".` : 'This action cannot be undone.'}`,
-      () => {
-        setCategories(prev => prev.filter(cat => cat !== categoryName));
-        setUrls(prev => prev.map(url => 
-          url.category === categoryName ? { ...url, category: 'Save for Later' } : url
-        ));
-        showToast(t.categoryDeleted, 'success');
+      // Filter data based on export options
+      if (!exportData.includeMetadata) {
+        dataToExport.urls = urls.map(({ id, url, title, category }) => ({ id, url, title, category }));
       }
-    );
-  };
 
-  // Filter URLs based on search term
-  const filteredUrls = useMemo(() => {
-    return urls.filter(url => 
-      url.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      url.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      url.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [urls, searchTerm]);
-
-  // Group URLs by category
-  const groupedUrls = useMemo(() => {
-    const groups = {};
-    filteredUrls.forEach(url => {
-      if (!groups[url.category]) {
-        groups[url.category] = [];
-      }
-      groups[url.category].push(url);
-    });
-    return groups;
-  }, [filteredUrls]);
-
-  // Handle Enter key press for URL input
-  const handleUrlKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      if (selectedCategory) {
-        addUrl(selectedCategory);
-      }
+      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `url-manager-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      setShowBackupModal(false);
+    } catch (error) {
+      console.error('Error exporting data:', error);
     }
   };
 
-  // Handle Enter key press for email input
-  const handleEmailKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSignIn();
+  const handleImport = async (importData) => {
+    try {
+      if (importData.urls && Array.isArray(importData.urls)) {
+        setUrls(importData.urls);
+      }
+      
+      if (importData.categories && Array.isArray(importData.categories)) {
+        setCategories(importData.categories);
+      }
+      
+      // Import health data if available
+      if (importData.healthData) {
+        urlHealthService.importHealthData(importData.healthData);
+      }
+      
+      saveToLocalStorage(importData.urls || urls, importData.categories || categories);
+    } catch (error) {
+      console.error('Error importing data:', error);
     }
   };
 
-  // Toggle theme
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+  // QR Code and sharing
+  const handleGenerateQR = (url) => {
+    setCurrentURL(url);
+    setShowQRModal(true);
   };
 
-  // Toggle language
-  const toggleLanguage = () => {
-    setIsThaiMode(!isThaiMode);
+  const handleShare = (url) => {
+    setCurrentURL(url);
+    setShowShareModal(true);
   };
+
+  // Search and filter
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
+  };
+
+  // Authentication (if using Firebase)
+  const handleSignIn = async (email, password) => {
+    try {
+      // const userData = await firebaseService.signIn(email, password);
+      // setUser(userData);
+      // setIsSignedIn(true);
+      // await syncWithCloud();
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // await firebaseService.signOut();
+      setUser(null);
+      setIsSignedIn(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
+  // Cloud sync (if using Firebase)
+  const syncWithCloud = async () => {
+    try {
+      // const cloudData = await firebaseService.syncData(urls, categories);
+      // if (cloudData) {
+      //   setUrls(cloudData.urls || []);
+      //   setCategories(cloudData.categories || []);
+      //   saveToLocalStorage(cloudData.urls || [], cloudData.categories || []);
+      // }
+    } catch (error) {
+      console.error('Cloud sync error:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading URL Manager...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${themeConfig.bg} transition-all duration-500`}>
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
-      />
-
-      <HeaderSection
-        t={t}
-        themeConfig={themeConfig}
-        isDarkMode={isDarkMode}
-        isThaiMode={isThaiMode}
-        toggleTheme={toggleTheme}
-        toggleLanguage={toggleLanguage}
-        user={user}
-        handleSignOut={handleSignOut}
-        showInstallButton={showInstallButton}
-        handleInstallPWA={handleInstallPWA}
-        isOnline={isOnline}
-        isSyncing={isSyncing}
-      />
-
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {!user && (
-          <SignInSection
-            t={t}
-            themeConfig={themeConfig}
-            isDarkMode={isDarkMode}
-            isThaiMode={isThaiMode}
-            email={email}
-            setEmail={setEmail}
-            isSigningIn={isSigningIn}
-            handleSignIn={handleSignIn}
-            handleEmailKeyPress={handleEmailKeyPress}
+    <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
+          {/* Header */}
+          <HeaderSection
+            theme={theme}
+            language={language}
+            onToggleTheme={toggleTheme}
+            onToggleLanguage={toggleLanguage}
+            translations={t}
+            urlCount={urls.length}
+            categoryCount={categories.length}
+            healthStats={urlHealthService.getHealthStats()}
           />
-        )}
 
-        {user && (
-          <URLInputSection
-            t={t}
-            themeConfig={themeConfig}
-            isDarkMode={isDarkMode}
-            isThaiMode={isThaiMode}
-            currentUrl={currentUrl}
-            setCurrentUrl={setCurrentUrl}
-            addUrl={addUrl}
-            handleUrlKeyPress={handleUrlKeyPress}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
-        )}
+          {/* Sign In Section (if using authentication) */}
+          {/* <SignInSection
+            isSignedIn={isSignedIn}
+            user={user}
+            onSignIn={handleSignIn}
+            onSignOut={handleSignOut}
+            translations={t}
+          /> */}
 
-        {user && urls.length > 0 && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeConfig.textSecondary}`} size={20} />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={t.searchPlaceholder}
-                  className={`
-                    w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent
-                    transition-all duration-300 font-medium
-                    ${isDarkMode 
-                      ? 'border-purple-500/30 focus:ring-purple-500/30 bg-gray-800/40 text-purple-100 placeholder-purple-300/60' 
-                      : isThaiMode 
-                      ? 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                      : 'border-blue-200/50 focus:ring-blue-500/30 bg-white/60 text-blue-900 placeholder-blue-500/60'
-                    }
-                  `}
-                />
-              </div>
+          {/* Main Content */}
+          <div className="space-y-6">
+            {/* URL Input */}
+            <URLInputSection
+              onAddURL={handleAddURL}
+              categories={categories}
+              translations={t}
+              theme={theme}
+            />
 
-              <div className="flex flex-wrap gap-3">
-                <TouchButton
-                  onClick={selectAllUrls}
-                  variant="secondary"
-                  size="sm"
-                  isDark={isDarkMode}
-                >
-                  <Check size={16} />
-                  {t.selectAll}
-                </TouchButton>
-                
-                <TouchButton
-                  onClick={deselectAllUrls}
-                  variant="secondary"
-                  size="sm"
-                  isDark={isDarkMode}
-                >
-                  <X size={16} />
-                  {t.deselectAll}
-                </TouchButton>
+            {/* Action Bar */}
+            <ActionBar
+              urls={urls}
+              categories={categories}
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              onSearch={handleSearch}
+              onCategoryFilter={handleCategoryFilter}
+              onShowCategories={() => setShowCategoryModal(true)}
+              onShowBackup={() => setShowBackupModal(true)}
+              translations={t}
+              theme={theme}
+            />
 
-                <TouchButton
-                  onClick={() => setCategoryModal({ isOpen: true, mode: 'add', category: '' })}
-                  variant="secondary"
-                  size="sm"
-                  isDark={isDarkMode}
-                >
-                  <FolderPlus size={16} />
-                  {t.addCategory}
-                </TouchButton>
-              </div>
-            </div>
+            {/* URL List */}
+            <URLListSection
+              urls={urls}
+              onEditURL={handleEditURL}
+              onDeleteURL={handleDeleteURL}
+              onGenerateQR={handleGenerateQR}
+              onShare={handleShare}
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              translations={t}
+              theme={theme}
+            />
           </div>
-        )}
 
-        {user && (
-          <URLListSection
-            groupedUrls={groupedUrls}
-            selectedUrls={selectedUrls}
-            t={t}
-            themeConfig={themeConfig}
-            isDarkMode={isDarkMode}
-            isThaiMode={isThaiMode}
-            toggleUrlSelection={toggleUrlSelection}
-            openShareModal={openShareModal}
-            copyToClipboard={copyToClipboard}
-            openConfirmModal={openConfirmModal}
-            setUrls={setUrls}
-            showToast={showToast}
-            setCategoryModal={setCategoryModal}
-          />
-        )}
+          {/* PWA Sharing */}
+          <PWASharing translations={t} />
+        </div>
 
-        {user && urls.length > 0 && (
-          <div className="flex justify-center gap-3">
-            <TouchButton
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              variant="secondary"
-              size="md"
-              isDark={isDarkMode}
-              className="flex items-center gap-2"
-            >
-              <BarChart3 size={20} />
-              {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
-            </TouchButton>
-            
-            <TouchButton
-              onClick={() => setBackupModal(true)}
-              variant="primary"
-              size="md"
-              isDark={isDarkMode}
-              isThaiMode={isThaiMode}
-              className="flex items-center gap-2"
-            >
-              <BarChart3 size={20} />
-              Backup & Export
-            </TouchButton>
-          </div>
-        )}
+        {/* Modals */}
+        <CategoryModal
+          isOpen={showCategoryModal}
+          onClose={() => {
+            setShowCategoryModal(false);
+            setEditingURL(null);
+            setCurrentURL(null);
+          }}
+          categories={categories}
+          onAddCategory={handleAddCategory}
+          onDeleteCategory={handleDeleteCategory}
+          editingURL={editingURL}
+          onUpdateURL={handleUpdateURL}
+          translations={t}
+        />
 
-        {user && urls.length > 0 && showAnalytics && (
-          <div className={`${themeConfig.cardBg} rounded-3xl p-6 border ${themeConfig.cardBorder}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${themeConfig.accent} flex items-center justify-center`}>
-                <BarChart3 className="text-white" size={16} />
-              </div>
-              <h3 className={`text-lg font-semibold ${themeConfig.text}`}>
-                {t.analytics}
-              </h3>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/40' : 'bg-gray-50/80'} text-center`}>
-                <div className={`text-2xl font-bold ${themeConfig.text}`}>{urls.length}</div>
-                <div className={`text-sm ${themeConfig.textSecondary}`}>{t.totalUrls}</div>
-              </div>
-              
-              <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/40' : 'bg-gray-50/80'} text-center`}>
-                <div className={`text-2xl font-bold ${themeConfig.text}`}>{categories.length}</div>
-                <div className={`text-sm ${themeConfig.textSecondary}`}>Categories</div>
-              </div>
-              
-              <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/40' : 'bg-gray-50/80'} text-center`}>
-                <div className={`text-2xl font-bold ${themeConfig.text}`}>{dataUtils.formatBytes(metrics.dataSize)}</div>
-                <div className={`text-sm ${themeConfig.textSecondary}`}>{t.dataSize}</div>
-              </div>
-              
-              <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/40' : 'bg-gray-50/80'} text-center`}>
-                <div className={`text-2xl font-bold ${themeConfig.text}`}>{metrics.compressionRatio}%</div>
-                <div className={`text-sm ${themeConfig.textSecondary}`}>Compression</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+        <BackupExportModal
+          isOpen={showBackupModal}
+          onClose={() => setShowBackupModal(false)}
+          urls={urls}
+          onExport={handleExport}
+          onImport={handleImport}
+          translations={t}
+        />
 
-      <ActionBar
-        selectedUrls={selectedUrls}
-        urls={urls}
-        onShare={shareSelectedUrls}
-        onDelete={deleteSelectedUrls}
-        onChangeCategory={changeSelectedCategory}
-        categories={categories}
-        t={t}
-        isDark={isDarkMode}
-        isThaiMode={isThaiMode}
-        themeConfig={themeConfig}
-      />
+        <QRCodeModal
+          isOpen={showQRModal}
+          onClose={() => setShowQRModal(false)}
+          url={currentURL?.url}
+          title={currentURL?.title}
+        />
 
-      <CategoryModal
-        isOpen={categoryModal.isOpen}
-        onClose={() => setCategoryModal({ isOpen: false, mode: 'add', category: '' })}
-        mode={categoryModal.mode}
-        category={categoryModal.category}
-        categories={categories}
-        onSave={(categoryName) => {
-          if (categoryModal.mode === 'add') {
-            addCategory(categoryName);
-          } else if (categoryModal.mode === 'edit') {
-            updateCategory(categoryModal.category, categoryName);
-          }
-        }}
-        onDelete={() => deleteCategory(categoryModal.category)}
-        t={t}
-        isDark={isDarkMode}
-        isThaiMode={isThaiMode}
-        themeConfig={themeConfig}
-      />
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          url={currentURL}
+          translations={t}
+        />
 
-      <ShareModal
-        isOpen={shareModal.isOpen}
-        onClose={closeShareModal}
-        url={shareModal.url}
-        title={shareModal.title}
-        showQR={shareModal.showQR}
-        t={t}
-        isDark={isDarkMode}
-        themeConfig={themeConfig}
-        onShowToast={showToast}
-      />
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          title={confirmAction?.title}
+          message={confirmAction?.message}
+          confirmText={confirmAction?.confirmText}
+          onConfirm={confirmAction?.onConfirm}
+          type={confirmAction?.type}
+        />
 
-      <BackupExportModal
-        isOpen={backupModal}
-        onClose={() => setBackupModal(false)}
-        urls={urls}
-        categories={categories}
-        user={user}
-        onImport={handleImport}
-        t={t}
-        isDark={isDarkMode}
-        themeConfig={themeConfig}
-        onShowToast={showToast}
-      />
-
-      <ConfirmationModal
-        isOpen={confirmModal.isOpen}
-        onClose={closeConfirmModal}
-        onConfirm={confirmModal.onConfirm}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        type={confirmModal.type}
-        urlsToDelete={confirmModal.urlsToDelete}
-        confirmText="Delete"
-        cancelText="Cancel"
-        t={t}
-        isDark={isDarkMode}
-        themeConfig={themeConfig}
-      />
+        {/* Download Manager */}
+        <DownloadManager />
+      </div>
     </div>
   );
 }
