@@ -12,38 +12,7 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { PWASharing } from './components/PWASharing';
 import { DownloadManager } from './components/DownloadManager';
 import { urlHealthService } from './services/URLHealthService';
-
-// Built-in translations (removed the import that was causing the error)
-const TRANSLATIONS = {
-  en: {
-    addURL: { title: 'Add New URL' },
-    confirmDelete: { 
-      title: 'Delete URL', 
-      message: 'Are you sure you want to delete',
-      confirm: 'Delete'
-    },
-    confirmDeleteCategory: {
-      title: 'Delete Category',
-      message: 'Are you sure you want to delete category',
-      confirm: 'Delete'
-    },
-    backup: { title: 'Backup & Export' }
-  },
-  th: {
-    addURL: { title: 'เพิ่ม URL ใหม่' },
-    confirmDelete: { 
-      title: 'ลบ URL', 
-      message: 'คุณแน่ใจหรือไม่ที่จะลบ',
-      confirm: 'ลบ'
-    },
-    confirmDeleteCategory: {
-      title: 'ลบหมวดหมู่',
-      message: 'คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่',
-      confirm: 'ลบ'
-    },
-    backup: { title: 'สำรองข้อมูล และส่งออก' }
-  }
-};
+import { translations } from './constants/translations';
 
 function App() {
   // Core state
@@ -74,7 +43,7 @@ function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   // Get current translations
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = translations[language] || translations.en;
 
   // Initialize app
   useEffect(() => {
@@ -241,9 +210,9 @@ function App() {
     setCurrentURL(urlToDelete);
     setConfirmAction({
       type: 'delete',
-      title: t.confirmDelete.title,
-      message: `${t.confirmDelete.message}: "${urlToDelete?.title}"?`,
-      confirmText: t.confirmDelete.confirm,
+      title: t.confirmDelete || 'Delete URL',
+      message: `${t.aboutToDelete || 'Are you sure you want to delete'}: "${urlToDelete?.title}"?`,
+      confirmText: t.delete || 'Delete',
       onConfirm: () => confirmDeleteURL(urlId)
     });
     setShowConfirmModal(true);
@@ -283,9 +252,9 @@ function App() {
   const handleDeleteCategory = (categoryName) => {
     setConfirmAction({
       type: 'deleteCategory',
-      title: t.confirmDeleteCategory?.title || 'Delete Category',
-      message: `${t.confirmDeleteCategory?.message || 'Delete category'}: "${categoryName}"?`,
-      confirmText: t.confirmDeleteCategory?.confirm || 'Delete',
+      title: t.deleteCategory || 'Delete Category',
+      message: `${t.confirmDeleteCategory || 'Delete category'}: "${categoryName}"?`,
+      confirmText: t.delete || 'Delete',
       onConfirm: () => confirmDeleteCategory(categoryName)
     });
     setShowConfirmModal(true);
