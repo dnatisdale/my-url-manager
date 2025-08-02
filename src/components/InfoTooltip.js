@@ -1,43 +1,53 @@
-// This entire code goes into: src/components/InfoTooltip.js
-
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
 
-export const InfoTooltip = ({ message, isDark = false, className = "" }) => {
+export const InfoTooltip = ({ 
+  content, 
+  className = "",
+  iconSize = 16,
+  position = "top" 
+}) => {
   const [isVisible, setIsVisible] = useState(false);
 
+  const positionClasses = {
+    top: "bottom-full left-1/2 transform -translate-x-1/2 mb-2",
+    bottom: "top-full left-1/2 transform -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 transform -translate-y-1/2 mr-2",
+    right: "left-full top-1/2 transform -translate-y-1/2 ml-2"
+  };
+
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative inline-flex items-center ${className}`}>
       <button
+        type="button"
+        className="inline-flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+        style={{ width: iconSize + 8, height: iconSize + 8 }}
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        className={`
-          w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold
-          transition-all duration-200 hover:scale-110
-          ${isDark 
-            ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30' 
-            : 'bg-blue-500/20 text-blue-600 hover:bg-blue-500/30'
-          }
-        `}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        aria-label="More information"
       >
-        <Info size={10} />
+        <Info 
+          size={iconSize} 
+          className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200" 
+        />
       </button>
       
       {isVisible && (
-        <div className={`
-          absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 
-          text-xs rounded-lg shadow-lg z-50 whitespace-nowrap max-w-xs
-          ${isDark 
-            ? 'bg-gray-800 text-purple-100 border border-purple-500/30' 
-            : 'bg-white text-gray-800 border border-blue-200 shadow-md'
-          }
-        `}>
-          {message}
-          <div className={`
-            absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0
-            border-l-4 border-r-4 border-t-4 border-transparent
-            ${isDark ? 'border-t-gray-800' : 'border-t-white'}
-          `} />
+        <div className={`absolute z-50 ${positionClasses[position]}`}>
+          <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg py-2 px-3 shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs whitespace-normal">
+            {content}
+            {/* Tooltip arrow */}
+            <div 
+              className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-100 border-gray-200 dark:border-gray-700 transform rotate-45 ${
+                position === 'top' ? 'top-full left-1/2 -translate-x-1/2 -mt-1 border-r border-b' :
+                position === 'bottom' ? 'bottom-full left-1/2 -translate-x-1/2 -mb-1 border-l border-t' :
+                position === 'left' ? 'left-full top-1/2 -translate-y-1/2 -ml-1 border-t border-r' :
+                'right-full top-1/2 -translate-y-1/2 -mr-1 border-b border-l'
+              }`}
+            />
+          </div>
         </div>
       )}
     </div>
