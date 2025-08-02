@@ -83,9 +83,16 @@ function App() {
   const { metrics, updateDataMetrics, updateMemoryUsage } = usePerformanceMonitor();
   const { isOnline } = useOfflineStatus();
 
-  // NEW - Initialize DownloadManager
-  const downloadManager = DownloadManager({ isDark: isDarkMode, onShowToast: showToast });
+  // Get current translations and theme
+  const t = translations[isThaiMode ? 'th' : 'en'];
 
+  // Define showToast first
+  const showToast = (message, type = 'info') => {
+  // Your showToast function code goes here
+};
+
+  // NEW - Initialize DownloadManager (moved after showToast is defined)
+  const downloadManager = DownloadManager({ isDark: isDarkMode, onShowToast: showToast });
   // Get current translations and theme
   const t = translations[isThaiMode ? 'th' : 'en'];
   const themeKey = isDarkMode ? (isThaiMode ? 'thaiDark' : 'dark') : (isThaiMode ? 'thai' : 'light');
