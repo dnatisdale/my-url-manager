@@ -93,8 +93,6 @@ function App() {
 
   // NEW - Initialize DownloadManager (moved after showToast is defined)
   const downloadManager = DownloadManager({ isDark: isDarkMode, onShowToast: showToast });
-  // Get current translations and theme
-  const t = translations[isThaiMode ? 'th' : 'en'];
   const themeKey = isDarkMode ? (isThaiMode ? 'thaiDark' : 'dark') : (isThaiMode ? 'thai' : 'light');
   const themeConfig = themes[themeKey];
 
