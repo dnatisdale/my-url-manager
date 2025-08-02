@@ -1,6 +1,13 @@
 import React from 'react';
 
-export const Header = ({ categoriesCount, urlsCount }) => {
+export const Header = ({ categoriesCount, urlsCount, healthStats }) => {
+  const getHealthEmoji = () => {
+    if (!healthStats || healthStats.total === 0) return '📊';
+    if (healthStats.healthyPercentage >= 80) return '💚';
+    if (healthStats.healthyPercentage >= 60) return '💛';
+    return '❤️‍🩹';
+  };
+
   return (
     <div style={{ 
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -14,7 +21,7 @@ export const Header = ({ categoriesCount, urlsCount }) => {
         URL Manager Ultimate
       </h1>
       <p style={{ margin: '0', opacity: '0.9' }}>
-        🗂️ {categoriesCount} Categories • 🔗 {urlsCount} URLs • 🚀 All Features
+        🗂️ {categoriesCount} Categories • 🔗 {urlsCount} URLs • {getHealthEmoji()} {healthStats?.healthyPercentage || 0}% Healthy • 🚀 All Features
       </p>
     </div>
   );

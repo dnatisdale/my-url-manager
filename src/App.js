@@ -6,6 +6,7 @@ import { URLList } from './components/URLList';
 import { CategoryManager } from './components/CategoryManager';
 import { ExportImport } from './components/ExportImport';
 import { HealthMonitor } from './components/HealthMonitor';
+import { StatsDashboard } from './components/StatsDashboard';
 import { Footer } from './components/Footer';
 import { urlHealthService } from './services/URLHealthService';
 
@@ -251,6 +252,7 @@ function App() {
       <Header 
         categoriesCount={categories.length}
         urlsCount={urls.length}
+        healthStats={urlHealthService.getHealthStats()}
       />
 
       <AddURLForm 
@@ -258,7 +260,13 @@ function App() {
         onAddUrl={addUrl}
       />
 
-      {/* NEW: Health Monitor Component */}
+      {/* NEW: Statistics Dashboard */}
+      <StatsDashboard
+        urls={urls}
+        categories={categories}
+      />
+
+      {/* Health Monitor Component */}
       <HealthMonitor
         urls={urls}
         onHealthUpdate={handleHealthUpdate}
@@ -304,7 +312,7 @@ function App() {
         </>
       )}
 
-      <Footer phase="3" feature="URL Health Monitoring" />
+      <Footer phase="4" feature="Statistics Dashboard" />
     </div>
   );
 }
