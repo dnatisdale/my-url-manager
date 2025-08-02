@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const URLList = ({ urls, allUrls, onDeleteUrl, onCopyUrl }) => {
+export const URLList = ({ urls, allUrls, onDeleteUrl, onCopyUrl, showHealthIndicators = false }) => {
   
   // Get category color
   const getCategoryColor = (category) => {
@@ -41,6 +41,11 @@ export const URLList = ({ urls, allUrls, onDeleteUrl, onCopyUrl }) => {
         background: '#f9fafb'
       }}>
         <h2 style={{ margin: 0 }}>📋 Your URLs ({urls.length})</h2>
+        {showHealthIndicators && (
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+            ✅ Healthy • ❌ Issues • ❓ Not checked
+          </p>
+        )}
       </div>
 
       {urls.length === 0 ? (
@@ -67,6 +72,7 @@ export const URLList = ({ urls, allUrls, onDeleteUrl, onCopyUrl }) => {
               getCategoryColor={getCategoryColor}
               onDeleteUrl={onDeleteUrl}
               onCopyUrl={onCopyUrl}
+              showHealthIndicators={showHealthIndicators}
             />
           ))}
         </div>
@@ -76,7 +82,45 @@ export const URLList = ({ urls, allUrls, onDeleteUrl, onCopyUrl }) => {
 };
 
 // Individual URL Item Component
-const URLItem = ({ url, index, totalUrls, getCategoryColor, onDeleteUrl, onCopyUrl }) => {
+const URLItem = ({ url, index, totalUrls, getCategoryColor, onDeleteUrl, onCopyUrl, showHealthIndicators }) => {
+  
+  // Get health indicator
+  const getHealthIndicator = () => {
+    if (!showHealthIndicators) return null;
+    
+    if (url.isHealthy === true) {
+      return (
+        <span style={{ 
+          fontSize: '16px', 
+          marginRight: '8px',
+          title: `Healthy${url.healthData?.responseTime ? ` (${url.healthData.responseTime}ms)` : ''}`
+        }}>
+          ✅
+        </span>
+      );
+    } else if (url.isHealthy === false) {
+      return (
+        <span style={{ 
+          fontSize: '16px', 
+          marginRight: '8px',
+          title: `Issue: ${url.healthData?.error || 'Not accessible'}`
+        }}>
+          ❌
+        </span>
+      );
+    } else {
+      return (
+        <span style={{ 
+          fontSize: '16px', 
+          marginRight: '8px',
+          title: 'Health status not checked yet'
+        }}>
+          ❓
+        </span>
+      );
+    }
+  };
+
   return (
     <div 
       style={{ 
@@ -101,6 +145,9 @@ const URLItem = ({ url, index, totalUrls, getCategoryColor, onDeleteUrl, onCopyU
             gap: '10px', 
             marginBottom: '6px' 
           }}>
+            {/* Health Indicator */}
+            {getHealthIndicator()}
+            
             <div style={{ 
               fontWeight: '600', 
               fontSize: '16px', 
@@ -108,6 +155,7 @@ const URLItem = ({ url, index, totalUrls, getCategoryColor, onDeleteUrl, onCopyU
             }}>
               {url.title}
             </div>
+            
             {/* Category Badge */}
             <span style={{
               padding: '2px 8px',
@@ -138,13 +186,22 @@ const URLItem = ({ url, index, totalUrls, getCategoryColor, onDeleteUrl, onCopyU
             {url.url}
           </a>
           
-          {/* Date */}
+          {/* Date and Health Info */}
           <div style={{ 
             fontSize: '12px', 
             color: '#6b7280', 
-            marginTop: '4px' 
+            marginTop: '4px',
+            display: 'flex',
+            gap: '12px',
+            flexWrap: 'wrap'
           }}>
-            Added: {url.added}
+            <span>Added: {url.added}</span>
+            {showHealthIndicators && url.lastHealthCheck && (
+              <span>Health checked: {new Date(url.lastHealthCheck).toLocaleDateString()}</span>
+            )}
+            {showHealthIndicators && url.healthData?.responseTime && (
+              <span>Response: {url.healthData.responseTime}ms</span>
+            )}
           </div>
         </div>
         

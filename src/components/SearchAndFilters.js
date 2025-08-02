@@ -11,7 +11,8 @@ export const SearchAndFilters = ({
   urlCountsByCategory, 
   urls, 
   filteredUrls, 
-  onClearSearch 
+  onClearSearch,
+  hasHealthSorting = false // NEW: Health sorting option
 }) => {
   return (
     <div style={{ 
@@ -107,6 +108,9 @@ export const SearchAndFilters = ({
             <option value="alphabetical">Title A-Z</option>
             <option value="url">URL A-Z</option>
             <option value="category">By Category</option>
+            {hasHealthSorting && (
+              <option value="health">By Health Status</option>
+            )}
           </select>
         </div>
       </div>

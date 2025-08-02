@@ -1,11 +1,8 @@
-import React from 'react';
-
-// URL Health Service
+// URL Health Monitoring Service
 class URLHealthService {
   constructor() {
     this.healthCache = new Map();
     this.checkQueue = new Set();
-    this.isChecking = false;
     this.subscribers = new Set();
     this.checkInterval = null;
   }
@@ -16,13 +13,13 @@ class URLHealthService {
     return () => this.subscribers.delete(callback);
   }
 
-  // Notify all subscribers of health updates
+  // Notify subscribers of health changes
   notifySubscribers(url, healthData) {
     this.subscribers.forEach(callback => {
       try {
         callback(url, healthData);
       } catch (error) {
-        console.error('Error in health service subscriber:', error);
+        console.error('Health service subscriber error:', error);
       }
     });
   }
@@ -34,6 +31,8 @@ class URLHealthService {
     this.checkInterval = setInterval(() => {
       this.checkAllCachedURLs();
     }, intervalMinutes * 60 * 1000);
+    
+    console.log(`Health monitoring started: checking every ${intervalMinutes} minutes`);
   }
 
   // Stop periodic health checks
@@ -41,6 +40,7 @@ class URLHealthService {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
+      console.log('Health monitoring stopped');
     }
   }
 
@@ -58,12 +58,9 @@ class URLHealthService {
 
   // Check single URL health
   async checkURL(url, options = {}) {
-    const { 
-      timeout = 10000, 
-      retries = 1,
-      updateCache = true 
-    } = options;
+    const { timeout = 8000, updateCache = true } = options;
 
+    // Avoid duplicate checks
     if (this.checkQueue.has(url)) {
       return this.getHealthData(url);
     }
@@ -71,24 +68,28 @@ class URLHealthService {
     this.checkQueue.add(url);
 
     try {
-      const healthData = await this.performHealthCheck(url, timeout, retries);
-      
-      if (updateCache) {
-        this.healthCache.set(url, {
-          ...healthData,
-          lastChecked: new Date().toISOString(),
-          checkCount: (this.getHealthData(url).checkCount || 0) + 1
-        });
+      const startTime = Date.now();
+      const healthData = await this.performHealthCheck(url, timeout);
+      const responseTime = Date.now() - startTime;
 
-        this.notifySubscribers(url, this.healthCache.get(url));
+      const result = {
+        ...healthData,
+        responseTime,
+        lastChecked: new Date().toISOString(),
+        checkCount: (this.getHealthData(url).checkCount || 0) + 1
+      };
+
+      if (updateCache) {
+        this.healthCache.set(url, result);
+        this.notifySubscribers(url, result);
       }
 
-      return healthData;
+      return result;
 
     } catch (error) {
-      const errorData = {
+      const errorResult = {
         isHealthy: false,
-        responseTime: null,
+        responseTime: Date.now() - Date.now(),
         statusCode: null,
         error: error.message,
         lastChecked: new Date().toISOString(),
@@ -96,11 +97,11 @@ class URLHealthService {
       };
 
       if (updateCache) {
-        this.healthCache.set(url, errorData);
-        this.notifySubscribers(url, errorData);
+        this.healthCache.set(url, errorResult);
+        this.notifySubscribers(url, errorResult);
       }
 
-      return errorData;
+      return errorResult;
 
     } finally {
       this.checkQueue.delete(url);
@@ -108,121 +109,128 @@ class URLHealthService {
   }
 
   // Perform the actual health check
-  async performHealthCheck(url, timeout, retries) {
-    let lastError;
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const startTime = Date.now();
-        const result = await this.fetchWithTimeout(url, timeout);
-        const responseTime = Date.now() - startTime;
-
-        return {
-          isHealthy: result.ok,
-          responseTime: responseTime,
-          statusCode: result.status,
-          error: result.ok ? null : `HTTP ${result.status}`,
-          redirected: result.redirected,
-          finalURL: result.url
-        };
-
-      } catch (error) {
-        lastError = error;
-        
-        if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-        }
-      }
-    }
-
+  async performHealthCheck(url, timeout) {
+    // Method 1: Try HEAD request with no-cors
     try {
-      return await this.alternativeHealthCheck(url, timeout);
-    } catch (altError) {
-      throw lastError || altError;
-    }
-  }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  // Fetch with timeout
-  async fetchWithTimeout(url, timeout) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
       const response = await fetch(url, {
         method: 'HEAD',
         mode: 'no-cors',
         signal: controller.signal,
-        cache: 'no-cache',
-        redirect: 'follow'
+        cache: 'no-cache'
       });
 
       clearTimeout(timeoutId);
+
+      // With no-cors, we can't read the actual status, but no error means it's reachable
       return {
-        ok: true,
-        status: 'unknown',
-        redirected: false,
-        url: url
+        isHealthy: true,
+        statusCode: 'reachable',
+        error: null
       };
 
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
+    } catch (fetchError) {
+      // Method 2: Try loading as image (works for many sites)
+      try {
+        await this.checkViaImage(url, timeout);
+        return {
+          isHealthy: true,
+          statusCode: 'image-accessible',
+          error: null
+        };
+      } catch (imageError) {
+        // Method 3: Try loading favicon
+        try {
+          await this.checkViaFavicon(url, timeout);
+          return {
+            isHealthy: true,
+            statusCode: 'favicon-accessible',
+            error: null
+          };
+        } catch (faviconError) {
+          // All methods failed
+          throw new Error(this.categorizeError(fetchError.message));
+        }
+      }
     }
   }
 
-  // Alternative health check using image loading
-  async alternativeHealthCheck(url, timeout) {
+  // Check URL by trying to load it as an image
+  checkViaImage(url, timeout) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      const startTime = Date.now();
-      
-      const cleanup = () => {
+      const timer = setTimeout(() => {
         img.onload = null;
         img.onerror = null;
-      };
-
-      const timeoutId = setTimeout(() => {
-        cleanup();
-        reject(new Error('Health check timeout'));
+        reject(new Error('Image load timeout'));
       }, timeout);
 
       img.onload = () => {
-        cleanup();
-        clearTimeout(timeoutId);
-        resolve({
-          isHealthy: true,
-          responseTime: Date.now() - startTime,
-          statusCode: 'image-success',
-          error: null
-        });
+        clearTimeout(timer);
+        resolve();
       };
 
       img.onerror = () => {
-        cleanup();
-        clearTimeout(timeoutId);
-        reject(new Error('URL not accessible'));
+        clearTimeout(timer);
+        reject(new Error('Image load failed'));
       };
 
-      img.src = `${url}/favicon.ico?t=${Date.now()}`;
+      img.src = url;
     });
+  }
+
+  // Check URL by trying to load its favicon
+  checkViaFavicon(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const timer = setTimeout(() => {
+        img.onload = null;
+        img.onerror = null;
+        reject(new Error('Favicon load timeout'));
+      }, timeout);
+
+      img.onload = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+
+      img.onerror = () => {
+        clearTimeout(timer);
+        reject(new Error('Favicon load failed'));
+      };
+
+      try {
+        const urlObj = new URL(url);
+        img.src = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico?t=${Date.now()}`;
+      } catch (error) {
+        clearTimeout(timer);
+        reject(new Error('Invalid URL for favicon check'));
+      }
+    });
+  }
+
+  // Categorize error messages
+  categorizeError(errorMessage) {
+    if (errorMessage.includes('abort')) return 'Request timeout';
+    if (errorMessage.includes('network')) return 'Network error';
+    if (errorMessage.includes('cors')) return 'CORS blocked';
+    if (errorMessage.includes('timeout')) return 'Connection timeout';
+    return 'URL not accessible';
   }
 
   // Check multiple URLs in batches
   async checkMultipleURLs(urls, options = {}) {
-    const { 
-      batchSize = 5, 
-      delayBetweenBatches = 1000,
-      ...checkOptions 
-    } = options;
-
+    const { batchSize = 3, delayBetweenBatches = 1000 } = options;
     const results = new Map();
-    
+
     for (let i = 0; i < urls.length; i += batchSize) {
       const batch = urls.slice(i, i + batchSize);
       
       const batchPromises = batch.map(async url => {
         try {
-          const result = await this.checkURL(url, checkOptions);
+          const result = await this.checkURL(url, options);
           results.set(url, result);
           return { url, success: true, result };
         } catch (error) {
@@ -238,6 +246,7 @@ class URLHealthService {
 
       await Promise.allSettled(batchPromises);
 
+      // Delay between batches to be nice to servers
       if (i + batchSize < urls.length && delayBetweenBatches > 0) {
         await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
       }
@@ -251,13 +260,18 @@ class URLHealthService {
     const urls = Array.from(this.healthCache.keys());
     if (urls.length === 0) return;
 
-    console.log(`Checking health of ${urls.length} cached URLs...`);
+    console.log(`Performing health check on ${urls.length} URLs...`);
     
-    await this.checkMultipleURLs(urls, {
-      batchSize: 3,
-      delayBetweenBatches: 2000,
-      timeout: 8000
-    });
+    try {
+      await this.checkMultipleURLs(urls, {
+        batchSize: 3,
+        delayBetweenBatches: 2000,
+        timeout: 6000
+      });
+      console.log('Health check completed');
+    } catch (error) {
+      console.error('Health check error:', error);
+    }
   }
 
   // Get health statistics
@@ -314,51 +328,5 @@ class URLHealthService {
 // Create and export singleton instance
 export const urlHealthService = new URLHealthService();
 
-// React hook for using the health service
-export const useURLHealth = (urls = []) => {
-  const [healthData, setHealthData] = React.useState(new Map());
-  const [isChecking, setIsChecking] = React.useState(false);
-
-  React.useEffect(() => {
-    const initialData = new Map();
-    urls.forEach(url => {
-      initialData.set(url, urlHealthService.getHealthData(url));
-    });
-    setHealthData(initialData);
-
-    const unsubscribe = urlHealthService.subscribe((url, health) => {
-      setHealthData(prev => new Map(prev.set(url, health)));
-    });
-
-    return unsubscribe;
-  }, [urls.join(',')]);
-
-  const checkURL = async (url) => {
-    setIsChecking(true);
-    try {
-      const result = await urlHealthService.checkURL(url);
-      return result;
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  const checkAllURLs = async () => {
-    if (urls.length === 0) return;
-    
-    setIsChecking(true);
-    try {
-      await urlHealthService.checkMultipleURLs(urls);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  return {
-    healthData,
-    isChecking,
-    checkURL,
-    checkAllURLs,
-    getHealthStats: () => urlHealthService.getHealthStats()
-  };
-};
+// Export the class for testing
+export { URLHealthService };
