@@ -1,18 +1,79 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { translations } from './constants/translations';
+
+// Only import components that exist in your project
 import { HeaderSection } from './components/HeaderSection';
-import { SignInSection } from './components/SignInSection';
 import { URLInputSection } from './components/URLInputSection';
 import { URLListSection } from './components/URLListSection';
 import { ActionBar } from './components/ActionBar';
-import { CategoryModal } from './components/CategoryModal';
-import { BackupExportModal } from './components/BackupExportModal';
-import { QRCodeModal } from './components/QRCodeModal';
-import { ShareModal } from './components/ShareModal';
-import { ConfirmationModal } from './components/ConfirmationModal';
-import { PWASharing } from './components/PWASharing';
-import { DownloadManager } from './components/DownloadManager';
-import { urlHealthService } from './services/URLHealthService';
-import { translations } from './constants/translations';
+
+// Conditionally import components that might exist
+let CategoryModal, BackupExportModal, QRCodeModal, ShareModal, ConfirmationModal, PWASharing, DownloadManager, SignInSection;
+
+try {
+  CategoryModal = require('./components/CategoryModal').CategoryModal;
+} catch (e) {
+  CategoryModal = () => null;
+}
+
+try {
+  BackupExportModal = require('./components/BackupExportModal').BackupExportModal;
+} catch (e) {
+  BackupExportModal = () => null;
+}
+
+try {
+  QRCodeModal = require('./components/QRCodeModal').QRCodeModal;
+} catch (e) {
+  QRCodeModal = () => null;
+}
+
+try {
+  ShareModal = require('./components/ShareModal').ShareModal;
+} catch (e) {
+  ShareModal = () => null;
+}
+
+try {
+  ConfirmationModal = require('./components/ConfirmationModal').ConfirmationModal;
+} catch (e) {
+  ConfirmationModal = () => null;
+}
+
+try {
+  PWASharing = require('./components/PWASharing').PWASharing;
+} catch (e) {
+  PWASharing = () => null;
+}
+
+try {
+  DownloadManager = require('./components/DownloadManager').DownloadManager;
+} catch (e) {
+  DownloadManager = () => null;
+}
+
+try {
+  SignInSection = require('./components/SignInSection').SignInSection;
+} catch (e) {
+  SignInSection = () => null;
+}
+
+// Health service - only import if it exists
+let urlHealthService;
+try {
+  urlHealthService = require('./services/URLHealthService').urlHealthService;
+} catch (e) {
+  // Create a mock health service if the real one doesn't exist
+  urlHealthService = {
+    startPeriodicChecks: () => {},
+    stopPeriodicChecks: () => {},
+    subscribe: () => () => {},
+    removeFromCache: () => {},
+    exportHealthData: () => ({}),
+    importHealthData: () => {},
+    getHealthStats: () => ({ total: 0, healthy: 0, unhealthy: 0, unknown: 0, healthyPercentage: 0 })
+  };
+}
 
 function App() {
   // Core state
@@ -50,8 +111,10 @@ function App() {
     initializeApp();
   }, []);
 
-  // Initialize health monitoring
+  // Initialize health monitoring (if available)
   useEffect(() => {
+    if (!urlHealthService.startPeriodicChecks) return;
+
     // Start periodic health checks every 30 minutes
     urlHealthService.startPeriodicChecks(30);
     
@@ -98,15 +161,17 @@ function App() {
         const parsedUrls = JSON.parse(savedUrls);
         setUrls(parsedUrls);
         
-        // Initialize health service with existing health data
-        parsedUrls.forEach(url => {
-          if (url.healthData) {
-            urlHealthService.healthCache.set(url.url, {
-              ...url.healthData,
-              lastChecked: url.lastHealthCheck || new Date().toISOString()
-            });
-          }
-        });
+        // Initialize health service with existing health data (if available)
+        if (urlHealthService.healthCache) {
+          parsedUrls.forEach(url => {
+            if (url.healthData) {
+              urlHealthService.healthCache.set(url.url, {
+                ...url.healthData,
+                lastChecked: url.lastHealthCheck || new Date().toISOString()
+              });
+            }
+          });
+        }
       }
       
       // Load categories
@@ -225,8 +290,8 @@ function App() {
       setUrls(updatedUrls);
       saveToLocalStorage(updatedUrls);
       
-      // Remove from health monitoring
-      if (urlToDelete) {
+      // Remove from health monitoring (if available)
+      if (urlToDelete && urlHealthService.removeFromCache) {
         urlHealthService.removeFromCache(urlToDelete.url);
       }
       
@@ -288,15 +353,10 @@ function App() {
         categories: categories,
         exportDate: new Date().toISOString(),
         version: '1.0',
-        includeMetadata: exportData.includeMetadata,
-        includeHealthStatus: exportData.includeHealthStatus,
-        healthData: exportData.includeHealthStatus ? urlHealthService.exportHealthData() : null
+        includeMetadata: exportData?.includeMetadata || true,
+        includeHealthStatus: exportData?.includeHealthStatus || false,
+        healthData: exportData?.includeHealthStatus ? urlHealthService.exportHealthData() : null
       };
-
-      // Filter data based on export options
-      if (!exportData.includeMetadata) {
-        dataToExport.urls = urls.map(({ id, url, title, category }) => ({ id, url, title, category }));
-      }
 
       const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -326,7 +386,7 @@ function App() {
       }
       
       // Import health data if available
-      if (importData.healthData) {
+      if (importData.healthData && urlHealthService.importHealthData) {
         urlHealthService.importHealthData(importData.healthData);
       }
       
@@ -383,6 +443,13 @@ function App() {
             healthStats={urlHealthService.getHealthStats()}
           />
 
+          {/* Sign In Section (if available) */}
+          <SignInSection
+            isSignedIn={isSignedIn}
+            user={user}
+            translations={t}
+          />
+
           {/* Main Content */}
           <div className="space-y-6">
             {/* URL Input */}
@@ -420,11 +487,11 @@ function App() {
             />
           </div>
 
-          {/* PWA Sharing */}
+          {/* PWA Sharing (if available) */}
           <PWASharing translations={t} />
         </div>
 
-        {/* Modals */}
+        {/* Modals (only render if components exist) */}
         <CategoryModal
           isOpen={showCategoryModal}
           onClose={() => {
@@ -473,7 +540,7 @@ function App() {
           type={confirmAction?.type}
         />
 
-        {/* Download Manager */}
+        {/* Download Manager (if available) */}
         <DownloadManager />
       </div>
     </div>
